@@ -9,3 +9,4 @@ types-PyYAML
 loguru
 argparse
 systemd-python
+coverage

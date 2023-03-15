@@ -1,6 +1,6 @@
 .mypy_cache/
 .vscode/
-tests/
+tests/future/
 yasmon.egg-info/
 docs/build/
 */__pycache__
