@@ -40,3 +40,13 @@ jobs:
         label: test
         message: World
         color: orange
+    - name: Generate coverage badge
+      uses: schneegans/dynamic-badges-action@v1.6.0
+      with:
+        auth: ${{ secrets.YASMONGIST }}
+        gistID: a48eccaf6951a87e01cb07d72b38de16
+        filename: yasmon_coverage.json
+        label: coverage
+        message: World
+        color: orange
+
