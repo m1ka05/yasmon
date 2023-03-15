@@ -1,9 +1,12 @@
 Welcome to Yasmon's documentation!
 ===================================
-|docs|
+|docs| |coverage|
 
 .. |docs| image:: https://github.com/m1ka05/yasmon/actions/workflows/docs.yml/badge.svg
    :target: https://github.com/m1ka05/yasmon/actions/workflows/docs.yaml
+
+.. |coverage| image:: https://yasmon.mika.sh/coverage/coverage.svg
+   :target: https://yasmon.mika.sh/coverage/
 
 ----
 
