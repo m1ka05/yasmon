@@ -15,10 +15,9 @@ jobs:
     - name: Set up Python 3.11
       uses: actions/setup-python@v2
       with:
-        python-version: '3.11'
+        python-version: '3.11-dev'
     - name: Upgrade pip, install package, install requirements, build docs
       run: |
-        sudo apt-get -y update && sudo apt-get -y install python3-systemd
         pip install --upgrade pip
         make init
         cd docs/ && make html
