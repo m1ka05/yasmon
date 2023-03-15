@@ -92,7 +92,7 @@ jobs:
     - name: Setup docs build
       run: |
         mkdir -p docs/build/html/
-        touch docs/build/html/.nojekyll
+        touch docs/build/html/.yesjekyll
     - uses: actions/download-artifact@master
       with:
         name: docs_page
