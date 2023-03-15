@@ -19,10 +19,10 @@ jobs:
     - name: Upgrade pip, install package, install requirements, build docs
       run: |
         sudo apt-get update && sudo apt-get -y \
-          build-essential
-          libsystemd-dev
-          libsystemd-{journal,daemon,login,id128}-dev
-          python3-dev
+          build-essential \
+          libsystemd-dev \
+          libsystemd-{journal,daemon,login,id128}-dev \
+          python3-dev \
           pkg-config
         pip install --upgrade pip
         pip install systemd
