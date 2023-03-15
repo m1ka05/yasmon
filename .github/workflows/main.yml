@@ -62,6 +62,7 @@ jobs:
         pip install -r docs/requirements.txt
         make init
         cd docs/ && make html
+        pip show sphinx-rtd-theme
         python -m pybadges --left-text=docs --right-text=latest > build/html/docs.svg
     - uses: actions/upload-artifact@v1
       with:
