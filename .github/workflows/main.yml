@@ -28,6 +28,7 @@ jobs:
           build-essential \
           libsystemd-dev
         pip install --upgrade pip
+        pip install -r tests/requirements.txt
         make init
         python -m coverage run -m unittest
         python -m coverage report
@@ -53,6 +54,7 @@ jobs:
           build-essential \
           libsystemd-dev
         pip install --upgrade pip
+        pip install -r docs/requirements.txt
         make init
         cd docs/ && make html
     - uses: actions/upload-artifact@v1
