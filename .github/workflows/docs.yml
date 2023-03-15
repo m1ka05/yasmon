@@ -21,7 +21,6 @@ jobs:
         sudo apt-get update && sudo apt-get -y install \
           build-essential \
           libsystemd-dev \
-          libsystemd-{journal,daemon,login,id128}-dev \
           python3-dev \
           pkg-config
         pip install --upgrade pip
