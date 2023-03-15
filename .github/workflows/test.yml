@@ -31,3 +31,12 @@ jobs:
       with:
         name: coverage
         path: htmlcov
+    - name: Generate test badge
+      uses: schneegans/dynamic-badges-action@v1.6.0
+      with:
+        auth: ${{ secrets.YASMONGIST }}
+        gistID: a48eccaf6951a87e01cb07d72b38de16
+        filename: yasmon_test.json
+        label: test
+        message: World
+        color: orange
