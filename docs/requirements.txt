@@ -1,4 +1,4 @@
 sphinx
-python-docs-theme
+sphinx-rtd-theme
 sphinx-toolbox
 pybadges
