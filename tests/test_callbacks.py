@@ -3,7 +3,7 @@ import unittest
 class GenericTests(unittest.TestCase):
 
     def test_placeholder(self):
-        assert True
+        assert False
 
 
 if __name__ == '__main__':
