@@ -49,4 +49,3 @@ Callbacks
 
    tasks
    callbacks
-   genindex
