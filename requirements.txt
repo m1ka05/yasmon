@@ -1,0 +1,10 @@
+nose
+sphinx
+sphinx-rtd-theme
+sphinx-toolbox
+watchfiles
+pyyaml
+nest-asyncio
+types-PyYAML
+loguru
+argparse
