@@ -1,7 +1,10 @@
 Yasmon - Yet Another System Monitor
 ===================================
 
-|docs| |coverage|
+|ci| |docs| |coverage|
+
+.. |ci| image:: https://github.com/m1ka05/yasmon/actions/workflows/main.yml/badge.svg
+   :target: https://github.com/m1ka05/yasmon/actions/workflows/main.yml
 
 .. |docs| image:: https://yasmon.mika.sh/docs.svg
    :target: https://yasmon.mika.sh/
