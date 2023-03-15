@@ -33,6 +33,7 @@ jobs:
         python -m coverage run -m unittest
         python -m coverage report
         python -m coverage html
+        coverage-badge -o htmlcov/coverage.svg
     - uses: actions/upload-artifact@v1
       with:
         name: coverage_page

@@ -1,2 +1,3 @@
 coverage
 nose
+coverage-badge

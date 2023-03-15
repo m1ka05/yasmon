@@ -5,3 +5,4 @@ yasmon.egg-info/
 docs/build/
 */__pycache__
 coverage.svg
+.coverage
