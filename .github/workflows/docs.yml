@@ -1,6 +1,9 @@
 name: "docs"
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -10,12 +13,15 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: ${{ matrix.python-version }}
     - name: Upgrade pip, install package, install requirements, build docs
       run: |
         sudo apt-get update && sudo apt-get -y install \
@@ -28,7 +34,6 @@ jobs:
       with:
         name: page
         path: docs/build/html/
-        if-no-files-found: error
         
   deploy:
     runs-on: ubuntu-latest
