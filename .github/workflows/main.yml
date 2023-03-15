@@ -84,3 +84,6 @@ jobs:
         path: .
     - id: deployment
       uses: actions/deploy-pages@main
+    - uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: .
