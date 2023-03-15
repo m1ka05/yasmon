@@ -19,9 +19,8 @@ jobs:
     - name: Upgrade pip, install package, install requirements, build docs
       run: |
         pip install --upgrade pip
-        pip install .
-        pip install sphinx sphinx-rtd-theme
-        sphinx-build docs/source/ ./docs/build/html/
+        make init
+        cd docs/ && make html
     - uses: actions/upload-artifact@v1
       with:
         name: page
