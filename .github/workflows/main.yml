@@ -1,0 +1,33 @@
+name: "test"
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Setup package
+      run: |
+        sudo apt-get update && sudo apt-get -y install \
+          build-essential \
+          libsystemd-dev
+        pip install --upgrade pip
+        make init
+        python -m coverage run -m unittest
+        python -m coverage report
+        python -m coverage html
+    - uses: actions/upload-artifact@v1
+      with:
+        name: coverage
+        path: htmlcov
