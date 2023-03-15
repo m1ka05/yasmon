@@ -84,6 +84,23 @@ jobs:
         path: .
     - id: deployment
       uses: actions/deploy-pages@main
+  deploy_test:
+    runs-on: ubuntu-latest
+    needs: [tests, docs]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup docs build
+      run: |
+        mkdir -p docs/build/html/
+        touch docs/build/html/.nojekyll
+    - uses: actions/download-artifact@master
+      with:
+        name: docs_page
+        path: docs/build/html/
+    - uses: actions/download-artifact@master
+      with:
+        name: coverage_page
+        path: docs/build/html/coverage/
     - uses: JamesIves/github-pages-deploy-action@v4
       with:
-        folder: .
+        folder: docs/build/html/
