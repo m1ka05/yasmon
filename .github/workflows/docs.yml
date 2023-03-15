@@ -73,7 +73,7 @@ jobs:
     - uses: actions/download-artifact@master
       with:
         name: coverage_page
-        path: .
+        path: coverage/
     - uses: actions/configure-pages@v3
     - uses: actions/upload-pages-artifact@v1
       with:
