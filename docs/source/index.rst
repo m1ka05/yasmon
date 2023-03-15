@@ -48,7 +48,6 @@ Callbacks
 
 .. toctree::
    :caption: Run as service
-   :hidden:
 
    asservice
    config
@@ -56,7 +55,6 @@ Callbacks
 
 .. toctree::
    :caption: API
-   :hidden:
 
    tasks
    callbacks
