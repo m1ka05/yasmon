@@ -15,10 +15,15 @@ jobs:
     - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: '3.11'
     - name: Upgrade pip, install package, install requirements, build docs
       run: |
-        sudo apt-get update && sudo apt-get -y install build-essential libsystemd-dev
+        sudo apt-get update && sudo apt-get -y \
+          build-essential
+          libsystemd-dev
+          libsystemd-{journal,daemon,login,id128}-dev
+          python3-dev
+          pkg-config
         pip install --upgrade pip
         pip install systemd
         make init
