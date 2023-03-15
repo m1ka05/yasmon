@@ -18,6 +18,9 @@ jobs:
         python-version: '3.11'
     - name: Upgrade pip, install package, install requirements, build docs
       run: |
+        sudo apt-get update && sudo apt-get -y install \
+          build-essential \
+          libsystemd-dev
         pip install --upgrade pip
         pip install systemd-python
         make init
