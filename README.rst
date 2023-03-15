@@ -1,5 +1,34 @@
-# Yasmon
+Yasmon - Yet Another System Monitor
+===================================
 
-Yet Another System Monitor written in Python with flexible 
-and extensible tasks and callbacks, as well as proper logging
-facilities. Written with Python 3.11 onwards in mind.
+Yet Another System Monitor written in Python with flexible and extensible
+tasks and callbacks, as well as proper logging facilities. Written with
+Python 3.11 onwards in mind.
+
+Design choices
+--------------
+
+   * Configuration in a single :doc:`YAML file <config>`
+   * Detailed logging to system journal
+   * Run as a :doc:`system service <asservice>`
+   * Concurrent execution of tasks and callbacks
+   * Task-independent callbacks with template parameters
+
+
+Tasks
+-----
+   * Monitoring file and directory changes, :class:`yasmon.tasks.WatchfilesTask`
+   * (TODO) Monitoring disk usage, :class:`yasmon.tasks.DiskUsageTask`
+   * (TODO) Monitoring general shell commands, :class:`yasmon.tasks.ShellTask`
+   * (TODO) Monitoring general python scripts, :class:`yasmon.tasks.PythonTask`
+   * (TODO) Monitoring file permissions, :class:`yasmon.tasks.FilePermissionsTask`
+   * (TODO) Monitoring systemd services, :class:`yasmon.tasks.SystemdServiceTask`
+   * (TODO) Monitoring memory usage, :class:`yasmon.tasks.MemoryUsageTask`
+   * (TODO) Monitoring cpu load, :class:`yasmon.tasks.CpuLoadTask`
+   * (TODO) Monitoring ping, :class:`yasmon.tasks.PingTask`
+
+Callbacks
+---------
+   * Shell commands, :class:`yasmon.callbacks.ShellCallback`
+   * (TODO) Python scripts, :class:`yasmon.callbacks.PythonCallback`
+   * (TODO) Mail notifications, :class:`yasmon.callbacks.MailCallback`
