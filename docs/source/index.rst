@@ -47,7 +47,7 @@ Callbacks
    * (TODO) Mail notifications, :class:`yasmon.callbacks.MailCallback`
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Run as service
    :hidden:
 
@@ -56,7 +56,7 @@ Callbacks
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: API
    :hidden:
 
