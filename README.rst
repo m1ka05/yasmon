@@ -1,9 +1,14 @@
 Yasmon - Yet Another System Monitor
 ===================================
-|docs|
+
+|docs| |coverage|
 
 .. |docs| image:: https://github.com/m1ka05/yasmon/actions/workflows/docs.yml/badge.svg
-   :target: https://yasmon.mika.sh/
+   :target: https://github.com/m1ka05/yasmon/actions/workflows/docs.yaml
+
+.. |coverage| image:: https://yasmon.mika.sh/coverage/coverage.svg
+   :target: https://yasmon.mika.sh/coverage/
+
 
 Yet Another System Monitor written in Python with flexible and extensible
 tasks and callbacks, as well as proper logging facilities. Written with
