@@ -18,7 +18,8 @@ jobs:
         python-version: '3.11'
     - name: Upgrade pip, install package, install requirements, build docs
       run: |
-        pip install --upgrade pip
+        pip install --upgrade pip        
+        pip install systemd
         make init
         cd docs/ && make html
     - uses: actions/upload-artifact@v1
