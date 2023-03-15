@@ -1,5 +1,12 @@
 Welcome to Yasmon's documentation!
 ===================================
+|docs|
+
+.. |docs| image:: https://github.com/m1ka05/yasmon/actions/workflows/docs.yml/badge.svg
+   :target: https://github.com/m1ka05/yasmon/actions/workflows/docs.yaml
+
+----
+
 
 Yet Another System Monitor written in Python with flexible and extensible
 tasks and callbacks, as well as proper logging facilities. Written with
