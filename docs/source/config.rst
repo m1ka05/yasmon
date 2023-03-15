@@ -5,8 +5,7 @@ The config file must include ``tasks`` and ``callbacks`` dictionaries.
 The former describes a collection of events to monitor and the latter a
 collection of actions that can be performed upon an event. Any task can
 be associatiated with any number of callbacks and any callback can be
-associated with any task. Additionally, one can include ``mail`` and
-``logger`` dictionaries defining mail and logger configuration.
+associated with any task. 
 
 Sample config file
 ------------------
@@ -75,19 +74,6 @@ ShellCallback
 
   type: shell
 
-PythonCallback
---------------
-
-.. code-block:: yaml
-
-  type: python
-
-MailCallback
-------------
-.. code-block:: yaml
-
-  type: mail
-
 
 
 Tasks
@@ -127,51 +113,12 @@ WatchfilesTask
 .. code-block:: yaml
 
   type: watchfiles
+  change: [added|modified|deleted]
+  callbacks:
+    - callback0
+    - callback1
+  paths:
+    - /some/path/to/file
+    - /some/path/to/directory/
 
 
-DiskUsageTask
--------------
-
-.. code-block:: yaml
-
-  type: diskusage
-
-
-SystemdServiceTask
-------------------
-
-.. code-block:: yaml
-
-  type: systemdservice
-
-
-MemoryUsageTask
----------------
-
-.. code-block:: yaml
-
-  type: cpuusage
-
-
-CpuLoadTask
------------
-
-.. code-block:: yaml
-
-  type: cpuload
-
-
-PingTask
------------
-
-.. code-block:: yaml
-
-  type: cpuload
-
-
-Logger
-======
-
-
-Mail
-====
