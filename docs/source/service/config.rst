@@ -7,9 +7,6 @@ collection of actions that can be performed upon an event. Any task can
 be associatiated with any number of callbacks and any callback can be
 associated with any task. 
 
-Sample config file
-------------------
-
 .. code-block:: yaml
     :caption: ~/.config/yasmon/config.yaml
 
@@ -49,7 +46,7 @@ Sample config file
         command: sleep 3; echo 'callback2  done'
 
 Callbacks
-=========
+---------
 
 Any particular callback may be used in the contex of any number of tasks.
 All callbacks are executed concurrently.
@@ -68,16 +65,14 @@ Callbacks are defined in a ``callbacks`` dictionary:
   
 
 ShellCallback
--------------
+"""""""""""""
 
 .. code-block:: yaml
 
   type: shell
 
-
-
 Tasks
-=====
+-----
 
 Tasks define events to be watched and associate these with callbacks.
 All tasks are executed concurrently.
@@ -108,7 +103,7 @@ Tasks are defined in a ``tasks`` dictionary:
   
 
 WatchfilesTask
---------------
+""""""""""""""
 
 .. code-block:: yaml
 
@@ -120,5 +115,3 @@ WatchfilesTask
   paths:
     - /some/path/to/file
     - /some/path/to/directory/
-
-

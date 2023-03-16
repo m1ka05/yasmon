@@ -21,15 +21,16 @@ Python 3.11 onwards in mind.
 Design choices
 --------------
 
-   * Configuration in a single :doc:`YAML file <config>`
+   * Configuration in a single :doc:`YAML file <service/config>`
    * Detailed logging to system journal
-   * Run as a :doc:`system service <asservice>`
+   * Run as a :doc:`system service <service/service>`
    * Concurrent execution of tasks and callbacks
    * Task-independent callbacks with template parameters
 
 
 Tasks
 -----
+
    * Monitoring file and directory changes, :class:`yasmon.tasks.WatchfilesTask`
    * (TODO) Monitoring disk usage, :class:`yasmon.tasks.DiskUsageTask`
    * (TODO) Monitoring general shell commands, :class:`yasmon.tasks.ShellTask`
@@ -42,19 +43,23 @@ Tasks
 
 Callbacks
 ---------
+
    * Shell commands, :class:`yasmon.callbacks.ShellCallback`
    * (TODO) Python scripts, :class:`yasmon.callbacks.PythonCallback`
    * (TODO) Mail notifications, :class:`yasmon.callbacks.MailCallback`
 
 .. toctree::
    :caption: Run as service
+   :hidden:
 
-   asservice
-   config
-
+   service/service
+   service/config
 
 .. toctree::
    :caption: API
+   :hidden:
 
-   tasks
-   callbacks
+   api/callbacks
+   api/tasks
+
+
