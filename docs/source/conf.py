@@ -10,6 +10,7 @@ project = 'Yasmon'
 copyright = '2023, Michał Ł. Mika'
 author = 'Michał Ł. Mika'
 release = '0.1.0'
+version = release
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -50,5 +51,6 @@ html_static_path = ['_static']
 html_theme_options = {
     'navigation_depth': -1,
     'collapse_navigation': False,
-    'titles_only': False
+    'titles_only': False,
+    'display_version': True,
 }

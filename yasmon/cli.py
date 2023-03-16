@@ -30,14 +30,3 @@ def main():
   
   runner = TaskRunner(tasks)
   runner()
-
-# TODO:
-# - set logger level via cli
-# - handle exceptions in async
-# - refactor
-# - tests
-# - ci github
-# - logs via mail (easy)
-# - smtp callback
-# - python task
-# - publish
