@@ -18,10 +18,16 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../../'))
 
+
+# sphinx-rtd-theme v1.2.0
+# known issue: jQuery not loading (on Github-Pages)
+# (https://github.com/readthedocs/readthedocs.org/pull/9654)
+# fix: add 'sphinx_rtd_theme' to extensions
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
     'sphinx.ext.napoleon',
+    'sphinx_rtd_theme',
     #'sphinx_toolbox.shields',
 ]
 
