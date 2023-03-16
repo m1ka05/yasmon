@@ -50,7 +50,6 @@ Callbacks
 
 .. toctree::
    :caption: Run as service
-   :maxdepth: 5
    :hidden:
 
    service/service
@@ -58,7 +57,6 @@ Callbacks
 
 .. toctree::
    :caption: API
-   :maxdepth: 5
    :hidden:
 
    api/callbacks

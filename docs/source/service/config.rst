@@ -70,6 +70,7 @@ ShellCallback
 .. code-block:: yaml
 
   type: shell
+  command: [some-shell-command]
 
 Tasks
 -----
@@ -85,20 +86,20 @@ Tasks are defined in a ``tasks`` dictionary:
     task0:
       type: watchfiles
       callbacks:
-        - callback0
-        - callback1
-        - callback2
+        - some_callback0
+        - some_callback1
+        - some_callback2
       ...
     task1:
-      type: diskusage
+      type: watchfiles
       callbacks:
-        - callback0
-        - callback2
+        - some_callback0
+        - some_callback2
       ...
     task2:
       type: watchfiles
       callbacks:
-        - callback2
+        - some_callback2
       ...
   
 
@@ -110,8 +111,10 @@ WatchfilesTask
   type: watchfiles
   change: [added|modified|deleted]
   callbacks:
-    - callback0
-    - callback1
+    - some_callback0
+    - some_callback1
+    ...
   paths:
     - /some/path/to/file
     - /some/path/to/directory/
+    ...
