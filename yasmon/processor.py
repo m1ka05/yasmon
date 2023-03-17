@@ -115,6 +115,10 @@ class YAMLProcessor:
                 raise AssertionError(f'{task} task data must be a dictionary')
 
             taskdata_yaml = yaml.dump(taskdata)
+
+            if 'callbacks' not in taskdata:
+                raise AssertionError(f'{task} task data must include callbacks list')
+
             task_callbacks: list[AbstractCallback] = [
                 callbacks[c] for c in taskdata["callbacks"] if c in taskdata["callbacks"]
             ]
@@ -154,6 +158,7 @@ class YAMLProcessor:
                         raise NotImplementedError(f'callback type {callbackdata["type"]} not implement')
             except CallbackSyntaxError as err:
                 logger.error(f'error while processing callbacks: {err}. Exiting!')
+                raise err
 
 
         logger.debug(f'done processing callbacks')

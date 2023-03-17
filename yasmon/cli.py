@@ -47,6 +47,10 @@ def main():
     logger.error(f"NotImplementedError: {err}")
     logger.error(f"Is your config file syntax correct? Exiting!")
     exit(1)
+  except CallbackSyntaxError as err:
+    logger.error(f"CallbackSyntaxError: {err}")
+    logger.error(f"Is your config file syntax correct? Exiting!")
+    exit(1)
   except Exception as err:
     logger.error(err)
     logger.error(f"Unexpected error while processing config. Exiting!")
