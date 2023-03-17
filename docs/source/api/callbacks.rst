@@ -14,3 +14,5 @@ Callbacks
 
    .. automethod:: __call__
 
+.. autoclass:: yasmon.CallbackAttributeError
+   :members:

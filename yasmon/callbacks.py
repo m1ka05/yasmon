@@ -8,7 +8,9 @@ if TYPE_CHECKING:
     from .tasks import AbstractTask
 
 class CallbackAttributeError(Exception):
-    "Raised when an undefined attribute is used"
+    """
+    Raised when an undefined task attribute is used by a callback.
+    """
     pass
 
     def __init__(self, attr, message="undefined attribute {attr}"):
