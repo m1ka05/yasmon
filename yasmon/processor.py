@@ -12,6 +12,7 @@ class YAMLProcessor:
     def load_file(self, filename: str):
         try:
             fh = open(filename, "r")
+            logger.debug(f'using config file {filename}')
         except FileNotFoundError as err:
             logger.error(f"YAML file {filename} not found")
             raise err
@@ -38,6 +39,7 @@ class YAMLProcessor:
     def load_document(self, document: str):
         try:
             self.data = yaml.safe_load(document)
+            logger.debug(f'config:\n{document}')
         except yaml.YAMLError as err:
             if hasattr(err, 'problem_mark'):
                 mark = getattr(err, 'problem_mark')
@@ -50,6 +52,7 @@ class YAMLProcessor:
             raise err
 
     def get_tasks(self, callbacks: CallbackDict):
+        logger.debug(f'processing tasks...')
         if 'tasks' not in self.data:
             raise AssertionError('tasks not defined')
 
@@ -75,9 +78,11 @@ class YAMLProcessor:
                 case _:
                     raise NotImplementedError(f'task type {taskdata["type"]} not implement')
 
+        logger.debug(f'done processing tasks')
         return taskslist
 
     def get_callbacks(self):
+        logger.debug(f'processing callbacks...')
         if 'callbacks' not in self.data:
             raise AssertionError('callbacks not defined')
         
@@ -98,4 +103,5 @@ class YAMLProcessor:
                 case _:
                     raise NotImplementedError(f'callback type {callbackdata["type"]} not implement')
 
+        logger.debug(f'done processing callbacks')
         return callbacksdict
