@@ -6,3 +6,4 @@ docs/build/
 */__pycache__
 coverage.svg
 .coverage
+htmlcov/
