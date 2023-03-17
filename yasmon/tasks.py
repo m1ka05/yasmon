@@ -59,18 +59,18 @@ class TaskList(list):
 
 
 class WatchfilesTask(AbstractTask):
-    def __init__(self, name: str, change: watchfiles.Change,
+    def __init__(self, name: str, changes: list[watchfiles.Change],
                  callbacks: list[AbstractCallback], paths: list[str],
                  attrs: Optional[dict[str, str]] = None) -> None:
         """
         :param name: unique identifier
-        :param change: watchfiles event
+        :param changes: list of watchfiles events
         :param callbacks: assigned callbacks
         :param paths: paths to watch (files/directories)
         :param attrs: (static) attributes
         """
         self.name = name
-        self.change = change
+        self.changes = changes
         self.callbacks = callbacks
         self.paths = paths
         self.attrs = {} if attrs is None else attrs
@@ -79,10 +79,17 @@ class WatchfilesTask(AbstractTask):
     async def __call__(self, callback):
         await super().__call__(callback)
         async for changes in watchfiles.awatch(*self.paths):
-            for change in changes:
-                if change[0] == self.change:
+            for (change, path) in changes:
+                if change in self.changes:
+                    match change:
+                        case watchfiles.Change.added:
+                            chng = 'added'
+                        case watchfiles.Change.modified:
+                            chng = 'modified'
+                        case watchfiles.Change.deleted:
+                            chng = 'deleted'
                     try:
-                        await callback(self, self.attrs | {'path': change[1]})
+                        await callback(self, self.attrs | {'change': chng, 'path': path})
                     except CallbackAttributeError as err:
                         logger.error(f'in task {self.name} callback {callback.name} raised {err}') # noqa
                         
@@ -95,7 +102,8 @@ class WatchfilesTask(AbstractTask):
 
         .. code:: yaml
 
-            change: added
+            changes:
+                - added
             callbacks:
                 - callback0
             paths:
@@ -125,10 +133,10 @@ class WatchfilesTask(AbstractTask):
             logger.error(message)
             raise err
 
-        change = getattr(watchfiles.Change, yamldata["change"])
+        changes = [getattr(watchfiles.Change, change) for change in yamldata['changes']]
         paths = yamldata["paths"]
         attrs = yamldata['attrs'] if 'attrs' in yamldata else None
-        return cls(name, change, callbacks, paths, attrs)
+        return cls(name, changes, callbacks, paths, attrs)
 
 
 class TaskRunner:
