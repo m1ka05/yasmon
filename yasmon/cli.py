@@ -25,6 +25,7 @@ def main():
     logger.error(f"Is your config file syntax correct? Exiting!")
     exit(1)
   except Exception as err:
+    logger.error(err)
     logger.error(f"Unexpected error while processing config. Exiting!")
     exit(1)
   

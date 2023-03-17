@@ -1,5 +1,6 @@
 from .processor import YAMLProcessor
 from .callbacks import AbstractCallback, CallbackDict, ShellCallback
+from .callbacks import CallbackAttributeError
 from .tasks import AbstractTask, TaskList, WatchfilesTask, TaskRunner
 from .cli import main
 
@@ -23,6 +24,7 @@ __all__ = [
     'TaskList',
     'WatchfilesTask',
     'TaskRunner',
+    'CallbackAttributeError',
     'main',
 ]
 

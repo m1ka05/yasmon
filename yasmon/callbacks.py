@@ -1,9 +1,19 @@
 from loguru import logger
 from abc import ABC, abstractmethod
-from typing import Self, Type
+from typing import Self, Type, TYPE_CHECKING
 import asyncio
 import yaml
 
+if TYPE_CHECKING:
+    from .tasks import AbstractTask
+
+class CallbackAttributeError(Exception):
+    "Raised when an undefined attribute is used"
+    pass
+
+    def __init__(self, attr, message="undefined attribute {attr}"):
+        self.message = message.format(attr=attr)
+        super().__init__(self.message)
 
 class AbstractCallback(ABC):
     """
@@ -22,11 +32,13 @@ class AbstractCallback(ABC):
         logger.info(f'{self.name} ({self.__class__}) initialized')
 
     @abstractmethod
-    async def __call__(self):
+    async def __call__(self, task: 'AbstractTask', attrs: dict[str,str]):
         """
         Coroutine called by :class:`TaskRunner`.
+
+        :param task: task calling the callback
         """
-        logger.info(f'{self.name} ({self.__class__}) called')
+        logger.info(f'{self.name} ({self.__class__}) called by {task.name} ({task.__class__})')
 
     @classmethod
     @abstractmethod
@@ -39,7 +51,7 @@ class AbstractCallback(ABC):
 
         :return: new instance
         """
-        ...
+        logger.debug(f'{name} defined form yaml \n{data}')
 
 
 class CallbackDict(dict):
@@ -64,10 +76,16 @@ class ShellCallback(AbstractCallback):
         self.cmd = cmd
         super().__init__()
 
-    async def __call__(self):
-        await super().__call__()
+    async def __call__(self, task: 'AbstractTask', attrs: dict[str,str]):
+        await super().__call__(task, attrs)
+
+        try:
+            cmd = self.cmd.format(**attrs)
+        except KeyError as e:
+            raise CallbackAttributeError(e)
+
         proc = await asyncio.create_subprocess_shell(
-            self.cmd,
+            cmd,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE)
@@ -99,6 +117,7 @@ class ShellCallback(AbstractCallback):
         :return: new instance
         :rtype: ShellCallback
         """
+        super().from_yaml(name, data)
         parsed = yaml.load(data, Loader=yaml.SafeLoader)
         cmd = parsed["command"]
         return cls(name, cmd)

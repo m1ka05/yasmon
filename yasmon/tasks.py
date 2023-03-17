@@ -1,11 +1,11 @@
 from loguru import logger
 from abc import ABC, abstractmethod
-from typing import Self, Type, Optional
+from typing import Self, Optional
 import watchfiles
 import asyncio
 import signal
 import yaml
-from .callbacks import AbstractCallback, CallbackDict
+from .callbacks import AbstractCallback, CallbackAttributeError
 
 class AbstractTask(ABC):
     """
@@ -20,7 +20,9 @@ class AbstractTask(ABC):
     def __init__(self):
         if not self.name:
             self.name = "Generic Task"
-        logger.info(f'{self.name} ({self.__class__}) initalized')
+        if not self.attrs:
+            self.attrs = {}
+        logger.info(f'{self.name} ({self.__class__}) initialized')
 
     @abstractmethod
     async def __call__(self, callback: AbstractCallback):
@@ -42,7 +44,7 @@ class AbstractTask(ABC):
 
         :return: new instance
         """
-        ...
+        logger.debug(f'{name} defined from yaml \n{data}')
 
 
 class TaskList(list):
@@ -58,17 +60,20 @@ class TaskList(list):
 
 class WatchfilesTask(AbstractTask):
     def __init__(self, name: str, change: watchfiles.Change,
-                 callbacks: list[AbstractCallback], paths: list[str]) -> None:
+                 callbacks: list[AbstractCallback], paths: list[str],
+                 attrs: Optional[dict[str, str]] = None) -> None:
         """
         :param name: unique identifier
         :param change: watchfiles event
         :param callbacks: assigned callbacks
         :param paths: paths to watch (files/directories)
+        :param attrs: (static) attributes
         """
         self.name = name
         self.change = change
         self.callbacks = callbacks
         self.paths = paths
+        self.attrs = {} if attrs is None else attrs
         super().__init__()
 
     async def __call__(self, callback):
@@ -76,7 +81,11 @@ class WatchfilesTask(AbstractTask):
         async for changes in watchfiles.awatch(*self.paths):
             for change in changes:
                 if change[0] == self.change:
-                    await callback()
+                    try:
+                        await callback(self, self.attrs | {'path': change[1]})
+                    except CallbackAttributeError as err:
+                        logger.error(f'in task {self.name} callback {callback.name} raised {err}') # noqa
+                        
 
     @classmethod
     def from_yaml(cls, name: str, data: str, 
@@ -102,6 +111,7 @@ class WatchfilesTask(AbstractTask):
         :return: new instance
         :rtype: WatchfilesTask
         """
+        super().from_yaml(name, data, callbacks)
         try:
             yamldata = yaml.load(data, Loader=yaml.SafeLoader)
         except yaml.YAMLError as err:
@@ -117,7 +127,8 @@ class WatchfilesTask(AbstractTask):
 
         change = getattr(watchfiles.Change, yamldata["change"])
         paths = yamldata["paths"]
-        return cls(name, change, callbacks, paths)
+        attrs = yamldata['attrs'] if 'attrs' in yamldata else None
+        return cls(name, change, callbacks, paths, attrs)
 
 
 class TaskRunner:
