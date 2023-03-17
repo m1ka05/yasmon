@@ -15,7 +15,8 @@ class YAMLProcessorTest(unittest.TestCase):
 
     def test_loading_files(self):
         self.assertRaises(FileNotFoundError, self.proc.load_file, "tests/assets/notafile")
-        self.assertRaises(FileNotFoundError, self.proc.load_file, "tests/asset/config")
+        self.assertRaises(FileNotFoundError, self.proc.load_file, "tests/asset/config.yaml")
+        self.assertRaises(yaml.YAMLError, self.proc.load_file, "tests/assets/invalid.yaml")
     
     def test_add_logger_stderr(self):
         test_yaml = """

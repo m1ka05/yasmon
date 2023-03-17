@@ -61,9 +61,7 @@ class YAMLProcessor:
         if 'log_file' in self.data:
             data = self.data['log_file']
             if type(data) is not dict:
-                raise AssertionError(f'log_file data must be a dictionary')
-            elif 'path' not in data:
-                raise AssertionError(f'log_file dictionary must contain a path key')
+                raise AssertionError(f'log_file data must be a dictionary and contain a path key!')
             elif 'level' in data:
                 loggers.append((data['path'], data['level']))
             else:
