@@ -70,7 +70,18 @@ ShellCallback
 .. code-block:: yaml
 
   type: shell
-  command: [some-shell-command]
+  command: some shell command
+
+
+LoggerCallback
+""""""""""""""
+
+.. code-block:: yaml
+
+  type: logger
+  level: [error | info | debug | ... (see Loguru docs)]
+  message: message
+
 
 Tasks
 -----

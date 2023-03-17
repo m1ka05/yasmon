@@ -33,22 +33,22 @@ Tasks
 -----
 
    * Monitoring file and directory changes, :class:`yasmon.tasks.WatchfilesTask`
-   * (TODO) Monitoring disk usage, :class:`yasmon.tasks.DiskUsageTask`
-   * (TODO) Monitoring general shell commands, :class:`yasmon.tasks.ShellTask`
-   * (TODO) Monitoring general python scripts, :class:`yasmon.tasks.PythonTask`
-   * (TODO) Monitoring file permissions, :class:`yasmon.tasks.FilePermissionsTask`
-   * (TODO) Monitoring systemd services, :class:`yasmon.tasks.SystemdServiceTask`
-   * (TODO) Monitoring memory usage, :class:`yasmon.tasks.MemoryUsageTask`
-   * (TODO) Monitoring cpu load, :class:`yasmon.tasks.CpuLoadTask`
-   * (TODO) Monitoring ping, :class:`yasmon.tasks.PingTask`
+   * |:construction:| Monitoring disk usage, :class:`yasmon.tasks.DiskUsageTask`
+   * |:construction:| Monitoring general shell commands, :class:`yasmon.tasks.ShellTask`
+   * |:construction:| Monitoring general python scripts, :class:`yasmon.tasks.PythonTask`
+   * |:construction:| Monitoring file permissions, :class:`yasmon.tasks.FilePermissionsTask`
+   * |:construction:| Monitoring systemd services, :class:`yasmon.tasks.SystemdServiceTask`
+   * |:construction:| Monitoring memory usage, :class:`yasmon.tasks.MemoryUsageTask`
+   * |:construction:| Monitoring cpu load, :class:`yasmon.tasks.CpuLoadTask`
+   * |:construction:| Monitoring ping, :class:`yasmon.tasks.PingTask`
 
 Callbacks
 ---------
 
    * Shell commands, :class:`yasmon.callbacks.ShellCallback`
    * Logger callback, :class:`yasmon.callbacks.LoggerCallback`
-   * (TODO) Python scripts, :class:`yasmon.callbacks.PythonCallback`
-   * (TODO) Mail notifications, :class:`yasmon.callbacks.MailCallback`
+   * |:construction:| Python scripts, :class:`yasmon.callbacks.PythonCallback`
+   * |:construction:| Mail notifications, :class:`yasmon.callbacks.MailCallback`
 
 .. toctree::
    :caption: Run as service

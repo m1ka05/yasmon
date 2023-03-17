@@ -29,6 +29,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.napoleon',
     'sphinx_rtd_theme',
+    'sphinxemoji.sphinxemoji',
     #'sphinx_toolbox.shields',
 ]
 

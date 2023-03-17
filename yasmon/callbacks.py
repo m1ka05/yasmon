@@ -221,7 +221,7 @@ class LoggerCallback(AbstractCallback):
 
         .. code:: yaml
 
-            level: info
+            level: [error | info | debug | ... (see Loguru docs)]
             message: message
 
         :param name: unique identifier

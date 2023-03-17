@@ -9,6 +9,11 @@ Callbacks
 
    .. automethod:: __init__
 
+.. autoclass:: yasmon.LoggerCallback
+   :members:
+
+   .. automethod:: __init__
+
 .. autoclass:: yasmon.AbstractCallback
    :members:
 
