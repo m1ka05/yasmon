@@ -46,6 +46,7 @@ Callbacks
 ---------
 
    * Shell commands, :class:`yasmon.callbacks.ShellCallback`
+   * Logger callback, :class:`yasmon.callbacks.LoggerCallback`
    * (TODO) Python scripts, :class:`yasmon.callbacks.PythonCallback`
    * (TODO) Mail notifications, :class:`yasmon.callbacks.MailCallback`
 

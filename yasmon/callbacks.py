@@ -3,9 +3,46 @@ from abc import ABC, abstractmethod
 from typing import Self, Type, TYPE_CHECKING
 import asyncio
 import yaml
+import re
 
 if TYPE_CHECKING:
     from .tasks import AbstractTask
+
+def process_attributes(expr: str, attrs: dict[str,str]) -> str:
+    """
+    Performs attribute substitutions in `expr`.
+    
+    This is also checking for circular dependencies (`max_depth = 42`).
+
+    :param expr: expression to process
+    :param attrs: attributes to substitute
+
+    :raises CallbackCircularAttributeError: see documentation
+    :raises CallbackAttributeError: see documentation
+
+    :return: processed expression
+    :rtype: str
+    """
+    max_depth = 42
+    regex = re.compile(r"\{[^{}]*\}") # match attributes
+    search = regex.search(expr)
+
+    depth = 0
+    while search:
+        try:
+            expr = expr.format(**attrs)
+        except KeyError as e:
+            raise CallbackAttributeError(e)
+
+        if depth < max_depth:
+            depth += 1
+        else:
+            raise CallbackCircularAttributeError(expr)
+
+        search = regex.search(expr)
+
+    return expr
+
 
 class CallbackAttributeError(Exception):
     """
@@ -15,6 +52,27 @@ class CallbackAttributeError(Exception):
     def __init__(self, attr, message="undefined attribute {attr}"):
         self.message = message.format(attr=attr)
         super().__init__(self.message)
+
+
+class CallbackCircularAttributeError(Exception):
+    """
+    Raised when task attributes have circular dependencies.
+    """
+
+    def __init__(self, expr: str, message="\n{expr}\ndetected circular attributes"):
+        self.message = message.format(expr=expr)
+        super().__init__(self.message)
+
+
+class CallbackSyntaxError(Exception):
+    """
+    Raised on callback syntax error.
+    """
+
+    def __init__(self, message="callback syntax error"):
+        self.message = message.format(message=message)
+        super().__init__(self.message)
+
 
 class AbstractCallback(ABC):
     """
@@ -81,9 +139,11 @@ class ShellCallback(AbstractCallback):
         await super().__call__(task, attrs)
 
         try:
-            cmd = self.cmd.format(**attrs)
-        except KeyError as e:
-            raise CallbackAttributeError(e)
+            cmd = process_attributes(self.cmd, attrs)
+        except CallbackAttributeError:
+            raise
+        except CallbackCircularAttributeError:
+            raise
 
         proc = await asyncio.create_subprocess_shell(
             cmd,
@@ -122,4 +182,71 @@ class ShellCallback(AbstractCallback):
         parsed = yaml.load(data, Loader=yaml.SafeLoader)
         cmd = parsed["command"]
         return cls(name, cmd)
+
+
+class LoggerCallback(AbstractCallback):
+    """
+    Callback implementing logger calls
+    """
+    
+    def __init__(self, name: str, level: str, message: str) -> None:
+        """
+        :param name: unique identifier
+        :param level: logging level
+        :param message: message to pass to logger
+        """
+        self.name = name
+        self.level = level
+        self.message = message
+        super().__init__()
+
+    async def __call__(self, task: 'AbstractTask', attrs: dict[str,str]) -> None:
+        await super().__call__(task, attrs)
+
+        try:
+            message = process_attributes(self.message, attrs)
+        except CallbackAttributeError:
+            raise
+        except CallbackCircularAttributeError:
+            raise
+
+        method = getattr(logger, self.level)
+        method(message)
+
+
+    @classmethod
+    def from_yaml(cls, name: str, data: str) -> Self:
+        """
+        :class:`LoggerCallback` can be also constructed from a YAML snippet.
+
+        .. code:: yaml
+
+            level: info
+            message: message
+
+        :param name: unique identifier
+        :param data: YAML snippet
+
+        :return: new instance
+        :rtype: LoggerCallback
+        """
+        super().from_yaml(name, data)
+        parsed = yaml.load(data, Loader=yaml.SafeLoader)
+
+        imp_levels = [
+            'trace',
+            'debug',
+            'info',
+            'success',
+            'warning',
+            'error',
+            'critical'
+        ]
+
+        level = parsed["level"]
+        if level not in imp_levels:
+            raise CallbackSyntaxError(f"invalid level '{level}'")
+
+        message = parsed["message"]
+        return cls(name, level, message)
 

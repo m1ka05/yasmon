@@ -16,3 +16,12 @@ Callbacks
 
 .. autoclass:: yasmon.CallbackAttributeError
    :members:
+
+.. autoclass:: yasmon.CallbackCircularAttributeError
+   :members:
+
+.. autoclass:: yasmon.CallbackSyntaxError
+   :members:
+
+.. autofunction:: yasmon.process_attributes
+

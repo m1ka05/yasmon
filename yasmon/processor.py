@@ -1,6 +1,6 @@
 from loguru import logger
 import yaml
-from .callbacks import AbstractCallback, CallbackDict, ShellCallback
+from .callbacks import AbstractCallback, CallbackDict, ShellCallback, LoggerCallback, CallbackSyntaxError
 from .tasks import TaskList, WatchfilesTask
 
 
@@ -97,11 +97,17 @@ class YAMLProcessor:
             if type(callbackdata) is not dict:
                 raise AssertionError(f'{callback} callback data must be a dictionary')
 
-            match callbackdata['type']:
-                case 'shell':
-                    callbacksdict[callback] = ShellCallback.from_yaml(callback, yaml.dump(callbackdata))
-                case _:
-                    raise NotImplementedError(f'callback type {callbackdata["type"]} not implement')
+            try:
+                match callbackdata['type']:
+                    case 'shell':
+                        callbacksdict[callback] = ShellCallback.from_yaml(callback, yaml.dump(callbackdata))
+                    case 'logger':
+                        callbacksdict[callback] = LoggerCallback.from_yaml(callback, yaml.dump(callbackdata))
+                    case _:
+                        raise NotImplementedError(f'callback type {callbackdata["type"]} not implement')
+            except CallbackSyntaxError as err:
+                logger.error(f'error while processing callbacks: {err}. Exiting!')
+
 
         logger.debug(f'done processing callbacks')
         return callbacksdict

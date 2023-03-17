@@ -1,6 +1,8 @@
 from .processor import YAMLProcessor
-from .callbacks import AbstractCallback, CallbackDict, ShellCallback
-from .callbacks import CallbackAttributeError
+from .callbacks import AbstractCallback, CallbackDict, ShellCallback, LoggerCallback
+from .callbacks import CallbackAttributeError, CallbackCircularAttributeError
+from .callbacks import CallbackSyntaxError
+from .callbacks import process_attributes
 from .tasks import AbstractTask, TaskList, WatchfilesTask, TaskRunner
 from .cli import main
 
@@ -20,11 +22,15 @@ __all__ = [
     'AbstractCallback',
     'CallbackDict',
     'ShellCallback',
+    'LoggerCallback',
     'AbstractTask',
     'TaskList',
     'WatchfilesTask',
     'TaskRunner',
     'CallbackAttributeError',
+    'CallbackCircularAttributeError',
+    'CallbackSyntaxError',
+    'process_attributes',
     'main',
 ]
 

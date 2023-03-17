@@ -5,7 +5,7 @@ import watchfiles
 import asyncio
 import signal
 import yaml
-from .callbacks import AbstractCallback, CallbackAttributeError
+from .callbacks import AbstractCallback, CallbackAttributeError, CallbackCircularAttributeError
 
 class AbstractTask(ABC):
     """
@@ -91,6 +91,8 @@ class WatchfilesTask(AbstractTask):
                     try:
                         await callback(self, self.attrs | {'change': chng, 'path': path})
                     except CallbackAttributeError as err:
+                        logger.error(f'in task {self.name} callback {callback.name} raised {err}') # noqa
+                    except CallbackCircularAttributeError as err:
                         logger.error(f'in task {self.name} callback {callback.name} raised {err}') # noqa
                         
 
