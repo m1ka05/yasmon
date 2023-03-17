@@ -38,6 +38,8 @@ class YAMLProcessor:
                     message = f'YAML problem:\n {problem}'
                 logger.error(message)
                 raise err
+            finally:
+                fh.close()
     
     def add_loggers(self) -> int:
         """
