@@ -22,27 +22,7 @@ Design choices
 
 * Configuration in a single YAML file
 * Detailed logging to system journal
-* Run as a system service
+* Runnable as a system service
 * Concurrent execution of tasks and callbacks
-* Task-independent callbacks with template parameters
-
-
-Tasks
------
-
-* Monitoring file and directory changes
-* (TODO) Monitoring disk usage
-* (TODO) Monitoring general shell commands
-* (TODO) Monitoring general python scripts
-* (TODO) Monitoring file permissions
-* (TODO) Monitoring systemd services
-* (TODO) Monitoring memory usage
-* (TODO) Monitoring cpu load
-* (TODO) Monitoring ping
-
-Callbacks
----------
-
-* Shell commands
-* (TODO) Python scripts
-* (TODO) Mail notifications
+* Task attributes for callback parameters
+* Repurposable callbacks

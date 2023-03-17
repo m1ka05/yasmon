@@ -23,9 +23,10 @@ Design choices
 
    * Configuration in a single :doc:`YAML file <service/config>`
    * Detailed logging to system journal
-   * Run as a :doc:`system service <service/service>`
+   * Runnable as a :doc:`system service <service/service>`
    * Concurrent execution of tasks and callbacks
-   * Task-independent callbacks with template parameters
+   * Task attributes for callback parameters
+   * Repurposable callbacks
 
 
 Tasks
