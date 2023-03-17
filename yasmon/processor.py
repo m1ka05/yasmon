@@ -1,7 +1,10 @@
 from loguru import logger
+from systemd.journal import JournalHandler
 import yaml
+import sys
 from .callbacks import AbstractCallback, CallbackDict, ShellCallback, LoggerCallback, CallbackSyntaxError
 from .tasks import TaskList, WatchfilesTask
+from .utils import add_logger
 
 
 class YAMLProcessor:
@@ -12,7 +15,7 @@ class YAMLProcessor:
     def load_file(self, filename: str):
         try:
             fh = open(filename, "r")
-            logger.debug(f'using config file {filename}')
+            logger.info(f'using config file {filename}')
         except FileNotFoundError as err:
             logger.error(f"YAML file {filename} not found")
             raise err
@@ -35,11 +38,55 @@ class YAMLProcessor:
                     message = f'YAML problem:\n {problem}'
                 logger.error(message)
                 raise err
+    
+    def add_loggers(self) -> int:
+        """
+        Add defined loggers.
+
+        :return: number of added loggers
+        :rtype: int
+        """
+        logger.info(f'processing loggers...')
+        loggers = []
+
+        if 'log_stderr' in self.data:
+            data = self.data['log_stderr']
+            if type(data) is not dict:
+                loggers.append((sys.stderr, None))
+            elif 'level' in data:
+                loggers.append((sys.stderr, data['level']))
+            
+        if 'log_file' in self.data:
+            data = self.data['log_file']
+            if type(data) is not dict:
+                raise AssertionError(f'log_file data must be a dictionary')
+            elif 'path' not in data:
+                raise AssertionError(f'log_file dictionary must contain a path key')
+            elif 'level' in data:
+                loggers.append((data['path'], data['level']))
+            else:
+                loggers.append((data['path'], None))
+            
+        if 'log_journal' in self.data:
+            data = self.data['log_journal']
+            if type(data) is not dict:
+                loggers.append((JournalHandler(), None))
+            elif 'level' in data:
+                loggers.append((JournalHandler(), data['level']))
+
+
+        for (log, level) in loggers:
+            if level is None:
+                add_logger(log)
+            else:
+                add_logger(log, level=level)
+        
+        return len(loggers)
 
     def load_document(self, document: str):
         try:
             self.data = yaml.safe_load(document)
-            logger.debug(f'config:\n{document}')
+            logger.info(f'config:\n{document}')
         except yaml.YAMLError as err:
             if hasattr(err, 'problem_mark'):
                 mark = getattr(err, 'problem_mark')
