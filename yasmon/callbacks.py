@@ -74,6 +74,14 @@ class CallbackSyntaxError(Exception):
         super().__init__(self.message)
 
 
+class CallbackDict(dict):
+    """
+    A dedicated `dictionary` for callbacks.
+    """
+    def __init__(self, mapping=(), **kwargs):
+        super().__init__(mapping, **kwargs)
+
+
 class AbstractCallback(ABC):
     """
     Abstract class from which all callback classes are derived.
@@ -111,14 +119,6 @@ class AbstractCallback(ABC):
         :return: new instance
         """
         logger.debug(f'{name} defined form yaml \n{data}')
-
-
-class CallbackDict(dict):
-    """
-    A dedicated `dictionary` for callbacks.
-    """
-    def __init__(self, mapping=(), **kwargs):
-        super().__init__(mapping, **kwargs)
 
 
 class ShellCallback(AbstractCallback):
