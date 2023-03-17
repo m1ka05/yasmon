@@ -35,8 +35,8 @@ jobs:
         pip install -r tests/requirements.txt
         make init
         python -m coverage run -m unittest
-        python -m coverage report
-        python -m coverage html
+        python -m coverage report --omit="*/test*"
+        python -m coverage html --omit="*/test*"
         coverage-badge -o htmlcov/coverage.svg
     - uses: actions/upload-artifact@v1
       with:
