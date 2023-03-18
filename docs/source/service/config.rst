@@ -134,11 +134,12 @@ WatchfilesTask
 Loggers
 -------
 
-There are three implemented loggers: `log_journal`, `log_stderr` and `log_file`.
-If none of these is defined, Yasmon will log to `stderr` with level `debug`.
-`log_file` requires a `path` to the log file. Make sure it is writtable.
-All loggers accept an optional `level` key, which can be `trace`, `debug`, 
-`info`, `success`, `warning`, `error` or `critical`. Default level is `debug`.
+There are three implemented loggers: ``log_journal``, ``log_stderr`` and ``log_file``.
+If none of these is defined, Yasmon will log to ``stderr`` with level ``debug``.
+``log_file`` requires a ``path`` to the log file. Make sure it is writtable.
+All loggers accept an optional ``level`` key, which can be one of ``trace``,
+``debug``, ``info``, ``success``, ``warning``, ``error`` or ``critical``.
+Default level is ``debug``.
 
 .. code-block:: yaml
 
