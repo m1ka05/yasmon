@@ -29,8 +29,8 @@ def main():
 
     num_loggers = processor.add_loggers()
     if num_loggers > 0:
-      logger.info(f'{num_loggers} user loggers defined. Removing default stderr logger!')
       logger.remove(1)
+      logger.info(f'{num_loggers} user loggers defined. Default stderr logger removed.')
     else:
       logger.warning('no loggers configured. Defaulting to stderr logger!')
 

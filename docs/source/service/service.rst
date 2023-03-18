@@ -5,12 +5,14 @@ A simple systemd unit file for an Yasmon user service could be
 
 .. code-block:: shell
 
+    # file: ~/.config/systemd/user/yasmon.service
     [Unit]
     Description=Yet Another System Monitor
     After=network.target
 
     [Service]
     Type=simple
+    SyslogIdentifier=yasmon
     ExecStart=/usr/bin/env python3 /home/$USER/.local/bin/yasmon
 
     [Install]
@@ -29,7 +31,7 @@ For journal logs one can use
 
 .. code:: shell
 
-    $ journalctl --user -u yasmon.service 
+    $ journalctl --user -fb -u yasmon.service 
 
 
 CLI

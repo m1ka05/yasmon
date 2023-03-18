@@ -70,9 +70,9 @@ class YAMLProcessor:
         if 'log_journal' in self.data:
             data = self.data['log_journal']
             if type(data) is not dict:
-                loggers.append((JournalHandler(), None))
+                loggers.append((JournalHandler(SYSLOG_IDENTIFIER='yasmon'), None))
             elif 'level' in data:
-                loggers.append((JournalHandler(), data['level']))
+                loggers.append((JournalHandler(SYSLOG_IDENTIFIER='yasmon'), data['level']))
 
 
         for (log, level) in loggers:
