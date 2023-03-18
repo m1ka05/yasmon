@@ -6,6 +6,7 @@ A simple systemd unit file for an Yasmon user service could be
 .. code-block:: shell
 
     # file: ~/.config/systemd/user/yasmon.service
+
     [Unit]
     Description=Yet Another System Monitor
     After=network.target
@@ -42,15 +43,12 @@ it can be also run from commandline with some options:
 
 .. code-block:: shell
 
-    $ yasmon -h
-    usage: yasmon [-h] config
+    $ yasmon --help
 
-    positional arguments:
-      config      yaml config file path
+    usage: yasmon [-h] [--config CONFIG]
 
     options:
-      -h, --help  show this help message and exit
-
-
+      -h, --help       show this help message and exit
+      --config CONFIG  yaml config file path
 
 
