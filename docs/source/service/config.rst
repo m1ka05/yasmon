@@ -14,26 +14,22 @@ associated with any task.
     tasks:
       task0:
         type: watchfiles
-        change: deleted
+        changes:
+          - deleted
+          - added
         callbacks:
           - callback0
         paths:
           - /some/path/to/directory/
       task1:
         type: watchfiles
-        change: modified
+        changes:
+          - modified
         callbacks:
           - callback1
           - callback2
         paths:
           - /some/path/to/file1
-      task2:
-        type: watchfiles
-        change: deleted
-        callbacks:
-          - callback2
-        paths:
-          - /some/path/to/file2
     callbacks:
       callback0:
         type: shell
@@ -120,7 +116,9 @@ WatchfilesTask
 .. code-block:: yaml
 
   type: watchfiles
-  change: [added|modified|deleted]
+  changes:
+    - [added|modified|deleted]
+    - ...
   callbacks:
     - some_callback0
     - some_callback1
