@@ -2,8 +2,6 @@ from yasmon import YAMLProcessor, CallbackDict, CallbackSyntaxError
 from loguru import logger
 import unittest
 import yaml
-from textwrap import dedent
-import io
 
 logger.remove(0)
 

@@ -7,3 +7,4 @@ docs/build/
 coverage.svg
 .coverage
 htmlcov/
+tests/assets/tmp/

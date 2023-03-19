@@ -1,13 +1,22 @@
 from loguru import logger
 from abc import ABC, abstractmethod
 from typing import Self, Optional
-from textwrap import dedent
 import watchfiles
 import asyncio
 import signal
 import yaml
 from .callbacks import AbstractCallback
 from .callbacks import CallbackAttributeError, CallbackCircularAttributeError
+
+
+class TaskSyntaxError(Exception):
+    """
+    Raised when on a task syntax issue.
+    """
+
+    def __init__(self, hint, message="task syntax error: {hint}"):
+        self.message = message.format(hint=hint)
+        super().__init__(self.message)
 
 
 class AbstractTask(ABC):
@@ -141,8 +150,40 @@ class WatchfilesTask(AbstractTask):
             logger.error(message)
             raise err
 
+        if 'changes' not in yamldata:
+            raise TaskSyntaxError(f"in task {name}: "
+                                  "missing changes list")
+
+        if 'paths' not in yamldata:
+            raise TaskSyntaxError(f"in task {name}: "
+                                  "missing paths list")
+
+        if not isinstance(yamldata['paths'], list):
+            raise TaskSyntaxError(f"in task {name}: "
+                                  "paths must be a list")
+
+        if len(yamldata['paths']) < 1:
+            raise TaskSyntaxError(f"in task {name}: "
+                                  "at least one path required")
+
+        if 'attrs' in yamldata:
+            if not isinstance(yamldata['attrs'], dict):
+                raise TaskSyntaxError(f"in task {name}: "
+                                      "attrs must be a dictionary")
+
+        imp_changes = ['added', 'modified', 'deleted']
+        for change in yamldata['changes']:
+            if change not in imp_changes:
+                raise TaskSyntaxError(f"in task {name}: "
+                                      f"invalid change {change}")
+
+        if not isinstance(yamldata['changes'], list):
+            raise TaskSyntaxError(f"in task {name}: "
+                                  "changes must be a list")
+
         changes = [getattr(watchfiles.Change, change)
                    for change in yamldata['changes']]
+
         paths = yamldata["paths"]
         attrs = yamldata['attrs'] if 'attrs' in yamldata else None
         return cls(name, changes, callbacks, paths, attrs)
@@ -152,66 +193,56 @@ class TaskRunner:
     """
     `Asyncio` loop handler. Acts as a functor.
     """
-    def __init__(self, tasks: TaskList):
+    def __init__(self, tasks: TaskList, testenv: bool = False):
         logger.debug('task runner started...')
-        self.tasks = tasks
         self.loop = asyncio.get_event_loop()
-        self.loop.set_exception_handler(self.exception_handler)
-        for s in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):
+        self.tasks = []
+
+        if testenv:
+            self.loop = asyncio.new_event_loop()
+            self.tasks.append(
+                self.loop.create_task(self.cancle_tasks()))
+
+        signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
+        for s in signals:
             self.loop.add_signal_handler(s, lambda s=s: asyncio.create_task(
-                self.signal_handler(self.loop, s)))
+                self.signal_handler(s)))
 
-    def __call__(self):
-        try:
-            for task in self.tasks:
-                for callback in task.callbacks:
-                    self.loop.create_task(task(callback))
-            self.loop.run_forever()
-        finally:
-            self.loop.close()
-            logger.debug('task runner stopped...')
+        for task in tasks:
+            for callback in task.callbacks:
+                self.tasks.append(
+                    self.loop.create_task(task(callback)))
 
-    @staticmethod
-    async def signal_handler(loop, sig: signal.Signals):
+    async def __call__(self):
+        for task in asyncio.as_completed(self.tasks):
+            try:
+                await task
+            except RuntimeError as err:
+                if str(err) == "Already borrowed":
+                    # Suppress RuntimeError("Already borrowed"), to
+                    # work around this issue:
+                    # https://github.com/samuelcolvin/watchfiles/issues/200
+                    pass
+                else:
+                    raise
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                raise
+
+    async def signal_handler(self, sig: signal.Signals):
         """
         Signal handler.
         """
         logger.debug(f'received {sig.name}')
-        tasks = [task for task in asyncio.all_tasks()
-                 if task is not asyncio.current_task()]
-        for task in tasks:
+        for task in self.tasks:
             task.cancel()
 
-        # Suppress RuntimeError("Already borrowed"), to work around this
-        # issue: https://github.com/samuelcolvin/watchfiles/issues/200
-        exceptions_buggy = await asyncio.gather(*tasks, return_exceptions=True)
-        exceptions = []
-        for e in exceptions_buggy:
-            if not (isinstance(e, RuntimeError)
-                    and str(e) == "Already borrowed"):
-                exceptions.append(e)
-
-        # Since there is no cleanup to perform, ignore all CancelledError
-        exceptions = list(filter(lambda exception:
-                          not isinstance(exception, asyncio.CancelledError),
-                          exceptions))
-
-        loop.stop()
-        for exception in exceptions:
-            logger.error(f'unexpected {exception.__class__.__name__}'
-                         f'while cancelling tasks: {exception}')
-
-    @staticmethod
-    def exception_handler(*args, **kwargs):
+    async def cancle_tasks(self, delay=5):
         """
-        Exception handler.
+        Cancle tasks (for testing purposed)
         """
-        loop, context = args
-        message = context.get('exception', context['message'])
-        logger.error(dedent(f"""\
-        unexpected exception on future {context["future"]}
-        message: {message}
-        """))
-
-        # this throws exceptions btw (ignored)
-        asyncio.create_task(TaskRunner.signal_handler(loop, signal.SIGTERM))
+        await asyncio.sleep(delay)
+        for task in self.tasks:
+            if task is not asyncio.current_task():
+                task.cancel()
