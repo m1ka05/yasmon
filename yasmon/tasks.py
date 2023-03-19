@@ -107,8 +107,10 @@ class WatchfilesTask(AbstractTask):
                         await callback(self, self.attrs | call_attrs)
                     except CallbackAttributeError as err:
                         logger.error(f'in task {self.name} callback {callback.name} raised {err}') # noqa
+                        raise err
                     except CallbackCircularAttributeError as err:
                         logger.error(f'in task {self.name} callback {callback.name} raised {err}') # noqa
+                        raise err
 
     @classmethod
     def from_yaml(cls, name: str, data: str,

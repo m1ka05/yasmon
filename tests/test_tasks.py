@@ -1,11 +1,11 @@
 from yasmon import YAMLProcessor
 from yasmon import WatchfilesTask, TaskSyntaxError
 from yasmon import TaskRunner
+from yasmon import CallbackAttributeError
+from yasmon import CallbackCircularAttributeError
 import watchfiles
 import unittest
 import yaml
-import subprocess
-import filecmp
 
 
 class WatchfilesTaskTest(unittest.TestCase):
@@ -194,6 +194,63 @@ class WatchfilesTaskTest(unittest.TestCase):
 
         self.assertRaises(
             FileNotFoundError,
+            runner.loop.run_until_complete,
+            runner())
+
+    def test_TaskRunner_call_test_circular_attrs(self):
+        test_yaml = """
+        callbacks:
+            callback0:
+                type: shell
+                command: exit 0; {WRONG}
+        tasks:
+            watchfilestask:
+                type: watchfiles
+                changes:
+                    - modified
+                paths:
+                    - tests/assets/tmp/watchfiles_call_test
+                callbacks:
+                    - callback0
+                attrs:
+                    myattr: somevalue using {WRONG}
+                    WRONG: "{myattr}"
+        """
+        self.proc.load_document(test_yaml)
+        callbacks = self.proc.get_callbacks()
+        tasks = self.proc.get_tasks(callbacks)
+        runner = TaskRunner(tasks, testenv=True)
+
+        self.assertRaises(
+            CallbackCircularAttributeError,
+            runner.loop.run_until_complete,
+            runner())
+
+    def test_TaskRunner_call_test_invalid_attr(self):
+        test_yaml = """
+        callbacks:
+            callback0:
+                type: shell
+                command: exit 0; {WRONG}
+        tasks:
+            watchfilestask:
+                type: watchfiles
+                changes:
+                    - added
+                paths:
+                    - tests/assets/tmp/
+                callbacks:
+                    - callback0
+                attrs:
+                    myattr: somevalue
+        """
+        self.proc.load_document(test_yaml)
+        callbacks = self.proc.get_callbacks()
+        tasks = self.proc.get_tasks(callbacks)
+        runner = TaskRunner(tasks, testenv=True)
+
+        self.assertRaises(
+            CallbackAttributeError,
             runner.loop.run_until_complete,
             runner())
 
