@@ -189,5 +189,5 @@ class TaskRunner:
                 exceptions.append(e)
 
         self.loop.stop()
-        if not exceptions:
+        if exceptions:
             raise ExceptionGroup("Exceptions upon {sig.name}", exceptions)
