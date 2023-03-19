@@ -1,11 +1,14 @@
 from loguru import logger
 from abc import ABC, abstractmethod
 from typing import Self, Optional
+from textwrap import dedent
 import watchfiles
 import asyncio
 import signal
 import yaml
-from .callbacks import AbstractCallback, CallbackAttributeError, CallbackCircularAttributeError
+from .callbacks import AbstractCallback
+from .callbacks import CallbackAttributeError, CallbackCircularAttributeError
+
 
 class AbstractTask(ABC):
     """
@@ -13,8 +16,9 @@ class AbstractTask(ABC):
 
     Derived tasks are functors calling the assigned callback coroutine
     and can be used for :class:`yasmon.tasks.TaskRunner`.
-    
-    The preferred way to instatiate a task is from class method :func:`~from_yaml`.
+
+    The preferred way to instatiate a task is from class
+    method :func:`~from_yaml`.
     """
     @abstractmethod
     def __init__(self):
@@ -29,12 +33,13 @@ class AbstractTask(ABC):
         """
         Coroutine called by :class:`TaskRunner`.
         """
-        logger.info(f'{self.name} ({self.__class__}) scheduled with {callback.name} ({callback.__class__})')
-        ...
+        logger.info(dedent(f'{self.name} ({self.__class__}) scheduled with\
+                           {callback.name} ({callback.__class__})'))
 
     @classmethod
     @abstractmethod
-    def from_yaml(cls, name: str, data: str, callbacks: list[AbstractCallback]):
+    def from_yaml(cls, name: str, data: str,
+                  callbacks: list[AbstractCallback]):
         """
         A class method for constructing a callback from a YAML document.
 
@@ -89,15 +94,15 @@ class WatchfilesTask(AbstractTask):
                         case watchfiles.Change.deleted:
                             chng = 'deleted'
                     try:
-                        await callback(self, self.attrs | {'change': chng, 'path': path})
+                        call_attrs = {'change': chng, 'path': path}
+                        await callback(self, self.attrs | call_attrs)
                     except CallbackAttributeError as err:
                         logger.error(f'in task {self.name} callback {callback.name} raised {err}') # noqa
                     except CallbackCircularAttributeError as err:
                         logger.error(f'in task {self.name} callback {callback.name} raised {err}') # noqa
-                        
 
     @classmethod
-    def from_yaml(cls, name: str, data: str, 
+    def from_yaml(cls, name: str, data: str,
                   callbacks: list[AbstractCallback]) -> Self:
         """
         :class:`WatchfilesTask` can be also constructed from a YAML snippet.
@@ -128,14 +133,16 @@ class WatchfilesTask(AbstractTask):
             if hasattr(err, 'problem_mark'):
                 mark = getattr(err, 'problem_mark')
                 problem = getattr(err, 'problem')
-                message = f'YAML problem in line {mark.line} column {mark.column}:\n {problem})'
+                message = dedent(f'YAML problem in line {mark.line} column\
+                                 {mark.column}:\n {problem})')
             elif hasattr(err, 'problem'):
                 problem = getattr(err, 'problem')
                 message = f'YAML problem:\n {problem}'
             logger.error(message)
             raise err
 
-        changes = [getattr(watchfiles.Change, change) for change in yamldata['changes']]
+        changes = [getattr(watchfiles.Change, change)
+                   for change in yamldata['changes']]
         paths = yamldata["paths"]
         attrs = yamldata['attrs'] if 'attrs' in yamldata else None
         return cls(name, changes, callbacks, paths, attrs)
@@ -177,7 +184,8 @@ class TaskRunner:
         exceptions_buggy = await asyncio.gather(*tasks, return_exceptions=True)
         exceptions = []
         for e in exceptions_buggy:
-            if isinstance(e, RuntimeError) and str(e) == "Already borrowed":  # noqa: E501
+            if not (isinstance(e, RuntimeError)
+                    and str(e) == "Already borrowed"):
                 exceptions.append(e)
 
         self.loop.stop()
