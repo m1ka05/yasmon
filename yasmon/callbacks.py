@@ -61,8 +61,8 @@ class CallbackCircularAttributeError(Exception):
     Raised when task attributes have circular dependencies.
     """
 
-    def __init__(self, expr: str, message=dedent("\n{expr}\ndetected\
-                                                 circular attributes")):
+    def __init__(self, expr: str, message=dedent("""\
+    {expr}\ndetected circular attributes""")):
         self.message = message.format(expr=expr)
         super().__init__(self.message)
 
@@ -109,8 +109,8 @@ class AbstractCallback(ABC):
 
         :param task: task calling the callback
         """
-        logger.info(dedent(f'{self.name} ({self.__class__}) called by\
-                     {task.name} ({task.__class__})'))
+        logger.info(f'{self.name} ({self.__class__}) called by'
+                    f'{task.name} ({task.__class__})')
 
     @classmethod
     @abstractmethod

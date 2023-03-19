@@ -33,8 +33,8 @@ class AbstractTask(ABC):
         """
         Coroutine called by :class:`TaskRunner`.
         """
-        logger.info(dedent(f'{self.name} ({self.__class__}) scheduled with\
-                           {callback.name} ({callback.__class__})'))
+        logger.info(f'{self.name} ({self.__class__}) scheduled with '
+                    f'{callback.name} ({callback.__class__})')
 
     @classmethod
     @abstractmethod
@@ -133,8 +133,8 @@ class WatchfilesTask(AbstractTask):
             if hasattr(err, 'problem_mark'):
                 mark = getattr(err, 'problem_mark')
                 problem = getattr(err, 'problem')
-                message = dedent(f'YAML problem in line {mark.line} column\
-                                 {mark.column}:\n {problem})')
+                message = (f'YAML problem in line {mark.line} column'
+                           f'{mark.column}:\n {problem})')
             elif hasattr(err, 'problem'):
                 problem = getattr(err, 'problem')
                 message = f'YAML problem:\n {problem}'
@@ -153,23 +153,26 @@ class TaskRunner:
     `Asyncio` loop handler. Acts as a functor.
     """
     def __init__(self, tasks: TaskList):
+        logger.debug('task runner started...')
+        self.tasks = tasks
         self.loop = asyncio.get_event_loop()
-        self.runner_tasks = []
-        for task in tasks:
-            for callback in task.callbacks:
-                self.runner_tasks.append(
-                    self.loop.create_task(task(callback)))
-
-    def __call__(self):
+        self.loop.set_exception_handler(self.exception_handler)
         for s in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):
             self.loop.add_signal_handler(s, lambda s=s: asyncio.create_task(
-                self.signal_handler(s)))
+                self.signal_handler(self.loop, s)))
+
+    def __call__(self):
         try:
+            for task in self.tasks:
+                for callback in task.callbacks:
+                    self.loop.create_task(task(callback))
             self.loop.run_forever()
         finally:
             self.loop.close()
+            logger.debug('task runner stopped...')
 
-    async def signal_handler(self, sig: signal.Signals):
+    @staticmethod
+    async def signal_handler(loop, sig: signal.Signals):
         """
         Signal handler.
         """
@@ -188,6 +191,27 @@ class TaskRunner:
                     and str(e) == "Already borrowed"):
                 exceptions.append(e)
 
-        self.loop.stop()
-        if exceptions:
-            raise ExceptionGroup("Exceptions upon {sig.name}", exceptions)
+        # Since there is no cleanup to perform, ignore all CancelledError
+        exceptions = list(filter(lambda exception:
+                          not isinstance(exception, asyncio.CancelledError),
+                          exceptions))
+
+        loop.stop()
+        for exception in exceptions:
+            logger.error(f'unexpected {exception.__class__.__name__}'
+                         f'while cancelling tasks: {exception}')
+
+    @staticmethod
+    def exception_handler(*args, **kwargs):
+        """
+        Exception handler.
+        """
+        loop, context = args
+        message = context.get('exception', context['message'])
+        logger.error(dedent(f"""\
+        unexpected exception on future {context["future"]}
+        message: {message}
+        """))
+
+        # this throws exceptions btw (ignored)
+        asyncio.create_task(TaskRunner.signal_handler(loop, signal.SIGTERM))
