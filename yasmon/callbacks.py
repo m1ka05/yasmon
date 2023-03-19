@@ -109,7 +109,7 @@ class AbstractCallback(ABC):
 
         :param task: task calling the callback
         """
-        logger.info(f'{self.name} ({self.__class__}) called by'
+        logger.info(f'{self.name} ({self.__class__}) called by '
                     f'{task.name} ({task.__class__})')
 
     @classmethod
