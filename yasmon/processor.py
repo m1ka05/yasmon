@@ -2,7 +2,9 @@ from loguru import logger
 from systemd.journal import JournalHandler
 import yaml
 import sys
-from .callbacks import AbstractCallback, CallbackDict, ShellCallback, LoggerCallback, CallbackSyntaxError
+from .callbacks import AbstractCallback
+from .callbacks import CallbackDict
+from .callbacks import ShellCallback, LoggerCallback, CallbackSyntaxError
 from .tasks import TaskList, WatchfilesTask
 from .utils import add_logger
 
@@ -32,7 +34,8 @@ class YAMLProcessor:
                 if hasattr(err, 'problem_mark'):
                     mark = getattr(err, 'problem_mark')
                     problem = getattr(err, 'problem')
-                    message = f'YAML problem in line {mark.line} column {mark.column}:\n {problem})'
+                    message = (f'YAML problem in line {mark.line} '
+                               f'column {mark.column}:\n {problem})')
                 elif hasattr(err, 'problem'):
                     problem = getattr(err, 'problem')
                     message = f'YAML problem:\n {problem}'
@@ -40,7 +43,7 @@ class YAMLProcessor:
                 raise err
             finally:
                 fh.close()
-    
+
     def add_loggers(self) -> int:
         """
         Add defined loggers.
@@ -48,7 +51,7 @@ class YAMLProcessor:
         :return: number of added loggers
         :rtype: int
         """
-        logger.info(f'processing loggers...')
+        logger.info('processing loggers...')
         loggers = []
 
         if 'log_stderr' in self.data:
@@ -57,30 +60,33 @@ class YAMLProcessor:
                 loggers.append((sys.stderr, None))
             elif 'level' in data:
                 loggers.append((sys.stderr, data['level']))
-            
+
         if 'log_file' in self.data:
             data = self.data['log_file']
             if type(data) is not dict:
-                raise AssertionError(f'log_file data must be a dictionary and contain a path key!')
+                raise AssertionError('log_file data must be a dictionary'
+                                     ' and contain a path key!')
             elif 'level' in data:
                 loggers.append((data['path'], data['level']))
             else:
                 loggers.append((data['path'], None))
-            
+
         if 'log_journal' in self.data:
             data = self.data['log_journal']
             if type(data) is not dict:
-                loggers.append((JournalHandler(SYSLOG_IDENTIFIER='yasmon'), None))
+                loggers.append(
+                    (JournalHandler(SYSLOG_IDENTIFIER='yasmon'), None))
             elif 'level' in data:
-                loggers.append((JournalHandler(SYSLOG_IDENTIFIER='yasmon'), data['level']))
-
+                loggers.append(
+                    (JournalHandler(SYSLOG_IDENTIFIER='yasmon'),
+                     data['level']))
 
         for (log, level) in loggers:
             if level is None:
                 add_logger(log)
             else:
                 add_logger(log, level=level)
-        
+
         return len(loggers)
 
     def load_document(self, document: str):
@@ -91,7 +97,8 @@ class YAMLProcessor:
             if hasattr(err, 'problem_mark'):
                 mark = getattr(err, 'problem_mark')
                 problem = getattr(err, 'problem')
-                message = f'YAML problem in line {mark.line} column {mark.column}:\n {problem})'
+                message = (f'YAML problem in line {mark.line}'
+                           f'column {mark.column}:\n {problem})')
             elif hasattr(err, 'problem'):
                 problem = getattr(err, 'problem')
                 message = f'YAML problem:\n {problem}'
@@ -99,12 +106,12 @@ class YAMLProcessor:
             raise err
 
     def get_tasks(self, callbacks: CallbackDict):
-        logger.debug(f'processing tasks...')
+        logger.debug('processing tasks...')
         if 'tasks' not in self.data:
             raise AssertionError('tasks not defined')
 
         tasks = self.data['tasks']
-        
+
         if type(tasks) is not dict:
             raise AssertionError('tasks must be a dictionary')
 
@@ -117,28 +124,33 @@ class YAMLProcessor:
             taskdata_yaml = yaml.dump(taskdata)
 
             if 'callbacks' not in taskdata:
-                raise AssertionError(f'{task} task data must include callbacks list')
+                raise AssertionError(f'{task} task data must include'
+                                     ' callbacks list')
 
             task_callbacks: list[AbstractCallback] = [
-                callbacks[c] for c in taskdata["callbacks"] if c in taskdata["callbacks"]
+                callbacks[c] for c in taskdata["callbacks"]
+                if c in taskdata["callbacks"]
             ]
 
             match taskdata['type']:
                 case 'watchfiles':
-                    taskslist.append(WatchfilesTask.from_yaml(task, taskdata_yaml, task_callbacks))
+                    taskslist.append(WatchfilesTask.from_yaml(task,
+                                                              taskdata_yaml,
+                                                              task_callbacks))
                 case _:
-                    raise NotImplementedError(f'task type {taskdata["type"]} not implement')
+                    raise NotImplementedError(f'task type {taskdata["type"]}'
+                                              ' not implement')
 
-        logger.debug(f'done processing tasks')
+        logger.debug('done processing tasks')
         return taskslist
 
     def get_callbacks(self):
-        logger.debug(f'processing callbacks...')
+        logger.debug('processing callbacks...')
         if 'callbacks' not in self.data:
             raise AssertionError('callbacks not defined')
-        
+
         callbacks = self.data['callbacks']
-        
+
         if type(self.data['callbacks']) is not dict:
             raise AssertionError('callbacks must be a dictionary')
 
@@ -146,20 +158,25 @@ class YAMLProcessor:
         for callback in callbacks:
             callbackdata = self.data['callbacks'].get(callback)
             if type(callbackdata) is not dict:
-                raise AssertionError(f'{callback} callback data must be a dictionary')
+                raise AssertionError(f'{callback} callback data must'
+                                     ' be a dictionary')
 
             try:
                 match callbackdata['type']:
                     case 'shell':
-                        callbacksdict[callback] = ShellCallback.from_yaml(callback, yaml.dump(callbackdata))
+                        callbacksdict[callback] = ShellCallback.from_yaml(
+                            callback, yaml.dump(callbackdata))
                     case 'logger':
-                        callbacksdict[callback] = LoggerCallback.from_yaml(callback, yaml.dump(callbackdata))
+                        callbacksdict[callback] = LoggerCallback.from_yaml(
+                            callback, yaml.dump(callbackdata))
                     case _:
-                        raise NotImplementedError(f'callback type {callbackdata["type"]} not implement')
+                        raise NotImplementedError('callback type '
+                                                  f'{callbackdata["type"]} '
+                                                  'not implement')
             except CallbackSyntaxError as err:
-                logger.error(f'error while processing callbacks: {err}. Exiting!')
+                logger.error(f'error while processing callbacks: {err}. '
+                             'Exiting!')
                 raise err
 
-
-        logger.debug(f'done processing callbacks')
+        logger.debug('done processing callbacks')
         return callbacksdict
