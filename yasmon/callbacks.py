@@ -1,6 +1,7 @@
 from loguru import logger
 from abc import ABC, abstractmethod
-from typing import Self, Type, TYPE_CHECKING
+from typing import Self, TYPE_CHECKING
+from textwrap import dedent
 import asyncio
 import yaml
 import re
@@ -8,10 +9,11 @@ import re
 if TYPE_CHECKING:
     from .tasks import AbstractTask
 
-def process_attributes(expr: str, attrs: dict[str,str]) -> str:
+
+def process_attributes(expr: str, attrs: dict[str, str]) -> str:
     """
     Performs attribute substitutions in `expr`.
-    
+
     This is also checking for circular dependencies (`max_depth = 42`).
 
     :param expr: expression to process
@@ -24,7 +26,7 @@ def process_attributes(expr: str, attrs: dict[str,str]) -> str:
     :rtype: str
     """
     max_depth = 42
-    regex = re.compile(r"\{[^{}]*\}") # match attributes
+    regex = re.compile(r"\{[^{}]*\}")  # match attributes
     search = regex.search(expr)
 
     depth = 0
@@ -59,7 +61,8 @@ class CallbackCircularAttributeError(Exception):
     Raised when task attributes have circular dependencies.
     """
 
-    def __init__(self, expr: str, message="\n{expr}\ndetected circular attributes"):
+    def __init__(self, expr: str, message=dedent("\n{expr}\ndetected\
+                                                 circular attributes")):
         self.message = message.format(expr=expr)
         super().__init__(self.message)
 
@@ -88,8 +91,9 @@ class AbstractCallback(ABC):
 
     Derived callbacks are functors and can be used as coroutines for any
     of :class:`yasmon.tasks.AbstractTasks`.
-    
-    The preferred way to instatiate a callback is from class method :func:`~from_yaml`.
+
+    The preferred way to instatiate a callback is from class
+    method :func:`~from_yaml`.
     """
 
     @abstractmethod
@@ -99,13 +103,14 @@ class AbstractCallback(ABC):
         logger.info(f'{self.name} ({self.__class__}) initialized')
 
     @abstractmethod
-    async def __call__(self, task: 'AbstractTask', attrs: dict[str,str]):
+    async def __call__(self, task: 'AbstractTask', attrs: dict[str, str]):
         """
         Coroutine called by :class:`TaskRunner`.
 
         :param task: task calling the callback
         """
-        logger.info(f'{self.name} ({self.__class__}) called by {task.name} ({task.__class__})')
+        logger.info(dedent(f'{self.name} ({self.__class__}) called by\
+                     {task.name} ({task.__class__})'))
 
     @classmethod
     @abstractmethod
@@ -125,7 +130,7 @@ class ShellCallback(AbstractCallback):
     """
     Callback implementing shell command execution.
     """
-    
+
     def __init__(self, name: str, cmd: str) -> None:
         """
         :param name: unique identifier
@@ -135,7 +140,7 @@ class ShellCallback(AbstractCallback):
         self.cmd = cmd
         super().__init__()
 
-    async def __call__(self, task: 'AbstractTask', attrs: dict[str,str]):
+    async def __call__(self, task: 'AbstractTask', attrs: dict[str, str]):
         await super().__call__(task, attrs)
 
         try:
@@ -188,7 +193,7 @@ class LoggerCallback(AbstractCallback):
     """
     Callback implementing logger calls
     """
-    
+
     def __init__(self, name: str, level: str, message: str) -> None:
         """
         :param name: unique identifier
@@ -200,7 +205,8 @@ class LoggerCallback(AbstractCallback):
         self.message = message
         super().__init__()
 
-    async def __call__(self, task: 'AbstractTask', attrs: dict[str,str]) -> None:
+    async def __call__(self, task: 'AbstractTask',
+                       attrs: dict[str, str]) -> None:
         await super().__call__(task, attrs)
 
         try:
@@ -212,7 +218,6 @@ class LoggerCallback(AbstractCallback):
 
         method = getattr(logger, self.level)
         method(message)
-
 
     @classmethod
     def from_yaml(cls, name: str, data: str) -> Self:
@@ -249,4 +254,3 @@ class LoggerCallback(AbstractCallback):
 
         message = parsed["message"]
         return cls(name, level, message)
-
