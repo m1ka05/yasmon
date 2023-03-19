@@ -197,6 +197,34 @@ class WatchfilesTaskTest(unittest.TestCase):
             runner.loop.run_until_complete,
             runner())
 
+    def test_TaskRunner_call_test_testenv(self):
+        test_yaml = """
+        callbacks:
+            callback0:
+                type: shell
+                command: exit 0;
+        tasks:
+            watchfilestask:
+                type: watchfiles
+                changes:
+                    - modified
+                paths:
+                    - tests/assets/tmp/watchfiles_call_test
+                callbacks:
+                    - callback0
+                attrs:
+                    myattr: somevalue
+        """
+        self.proc.load_document(test_yaml)
+        callbacks = self.proc.get_callbacks()
+        tasks = self.proc.get_tasks(callbacks)
+        runner = TaskRunner(tasks, testenv=True)
+
+        try:
+            runner.loop.run_until_complete(runner())
+        except Exception:
+            raise
+
     def test_TaskRunner_call_test_circular_attrs(self):
         test_yaml = """
         callbacks:
