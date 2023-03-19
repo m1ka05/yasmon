@@ -207,9 +207,9 @@ class WatchfilesTaskTest(unittest.TestCase):
             watchfilestask:
                 type: watchfiles
                 changes:
-                    - modified
+                    - deleted
                 paths:
-                    - tests/assets/tmp/watchfiles_call_test
+                    - tests/assets/tmp/
                 callbacks:
                     - callback0
                 attrs:
