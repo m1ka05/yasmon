@@ -63,6 +63,9 @@ Callbacks are defined in a ``callbacks`` dictionary:
 ShellCallback
 """""""""""""
 
+This callback implements execution of shell commands and supports
+task attributes in `command`.
+
 .. code-block:: yaml
 
   type: shell
