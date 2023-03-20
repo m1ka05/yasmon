@@ -75,6 +75,9 @@ task attributes in `command`.
 LoggerCallback
 """"""""""""""
 
+This callback implements custom logging to loggers defined in `log_*` and supports
+task attributes in `message`.
+
 .. code-block:: yaml
 
   type: logger
