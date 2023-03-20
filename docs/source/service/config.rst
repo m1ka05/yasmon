@@ -95,6 +95,7 @@ Tasks are defined in a ``tasks`` dictionary:
 
 .. code-block:: yaml
 
+  ...
   tasks:
     task0:
       type: watchfiles
@@ -115,6 +116,35 @@ Tasks are defined in a ``tasks`` dictionary:
         - some_callback2
       ...
   
+Tasks can define task attributes in an ``attrs`` dictionary. These
+attributes can be used in callbacks to implement calls specialized
+to a particular task. Futhermore, this allows for repurposable
+callbacks definitions.
+
+.. code-block:: yaml
+
+  ...
+  tasks:
+    task0:
+      type: watchfiles
+      callbacks:
+        - some_callback
+        - ...
+      attrs:
+        myattr: some value to be used in any of the callbacks
+        otherattr: some {myattr} value
+  callbacks:
+    some_callback:
+      type: shell
+      command: some {myattr} command
+  ...
+  
+It is also possible to use defined attributes in other attributes (see ``otherattr``).
+In this case watch out for circular dependencies. In the case of a circular
+dependency, Yasmon raises the :class:`yasmon.callbacks.CallbackCircularAttributeError`.
+If the attribute requested by a callback is not defined in the task calling this
+callback, Yasmon raises :class:`yasmon.callbacks.CallbackAttributeError`.
+
 
 WatchfilesTask
 """"""""""""""
