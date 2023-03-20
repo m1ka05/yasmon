@@ -1,4 +1,4 @@
-name: "ci"
+releasename: "ci"
 on:
   workflow_dispatch:
   push:
