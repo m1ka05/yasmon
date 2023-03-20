@@ -9,7 +9,7 @@
 project = 'Yasmon'
 copyright = '2023, Michał Ł. Mika'
 author = 'Michał Ł. Mika'
-release = '0.1.6'
+release = '0.1.7'
 version = release
 
 # -- General configuration ---------------------------------------------------
