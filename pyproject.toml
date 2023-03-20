@@ -1,0 +1,25 @@
+[project]
+name = "yasmon"
+version = "0.1.0"
+authors = [
+  { name="Michał Ł. Mika", email="michal@mika.sh" },
+]
+description = "Python system monitor with callbacks and logging"
+readme = "README.rst"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+]
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[project.urls]
+"Homepage" = "https://github.com/m1ka05/yasmon"
+"Bug Tracker" = "https://github.com/m1ka05/yasmon/issues"
+
+[project.scripts]
+yasmon = "yasmon.yasmon:main"

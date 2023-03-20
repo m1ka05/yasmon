@@ -19,7 +19,14 @@ setup(
     url='https://github.com/m1ka05/',
     license=license,
     packages=find_packages(exclude=('tests', 'docs')),
-    entry_points = {
+    entry_points={
         'console_scripts': ['yasmon=yasmon:main'],
     }
 )
+
+#!/usr/bin/env python
+
+import setuptools
+
+if __name__ == "__main__":
+    setuptools.setup()
