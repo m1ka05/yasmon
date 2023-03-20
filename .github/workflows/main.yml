@@ -1,4 +1,3 @@
-releasename: "ci"
 on:
   workflow_dispatch:
   push:
