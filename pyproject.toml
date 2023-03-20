@@ -22,4 +22,4 @@ dependencies = {file = ["requirements.txt"]}
 "Bug Tracker" = "https://github.com/m1ka05/yasmon/issues"
 
 [project.scripts]
-yasmon = "yasmon.yasmon:main"
+yasmon = "yasmon:main"
