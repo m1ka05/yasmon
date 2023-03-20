@@ -119,11 +119,14 @@ Tasks are defined in a ``tasks`` dictionary:
 WatchfilesTask
 """"""""""""""
 
+This task implements watching changes on the file system. The `change`` can
+one of ``added``, ``modified`` or ``deleted``. 
+
 .. code-block:: yaml
 
   type: watchfiles
   changes:
-    - [added|modified|deleted]
+    - [change]
     - ...
   callbacks:
     - some_callback0
@@ -132,6 +135,9 @@ WatchfilesTask
   paths:
     - /some/path/to/file
     - /some/path/to/directory/
+    ...
+  attrs:
+    myattr: some value
     ...
 
 
