@@ -1,4 +1,4 @@
-# /usr/bin/env bash
+#!/usr/bin/env bash
 
 tmp_dir=tests/assets/tmp
 add_dir=$assets_dir/added/

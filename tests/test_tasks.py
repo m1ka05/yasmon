@@ -20,7 +20,6 @@ class TaskRunnerTest(unittest.TestCase):
 
     def start_input_producer(self):
         self.input_producer = subprocess.Popen(self.input_producer_script,
-                                               shell=True,
                                                stdout=subprocess.PIPE,
                                                stderr=subprocess.PIPE)
 
@@ -195,7 +194,8 @@ class WatchfilesTaskTest(unittest.TestCase):
 
     def start_input_producer(self):
         self.input_producer = subprocess.Popen(self.input_producer_script,
-                                               shell=True)
+                                               stdout=subprocess.PIPE,
+                                               stderr=subprocess.PIPE)
 
         # wait a moment for  input producer (just to be safe)
         time.sleep(1)
