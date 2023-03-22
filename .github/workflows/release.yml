@@ -33,9 +33,7 @@ jobs:
         pip install --upgrade build
         pip install -r tests/requirements.txt
         make init
-        tests/assets/watchfiles_test.sh & 
-        sleep 1; python -m coverage run --omit="*/test*" -m unittest 
-        kill -9 $(cat tests/assets/tmp/watchfiles_test.sh.pid)
+        python -m coverage run --omit="*/test*" -m unittest -b
         python -m build
 
     - uses: "marvinpinto/action-automatic-releases@latest"

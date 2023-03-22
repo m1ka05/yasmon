@@ -1,3 +1,7 @@
+from yasmon.callbacks import AbstractCallback
+from yasmon.callbacks import CallbackAttributeError
+from yasmon.callbacks import CallbackCircularAttributeError
+
 from loguru import logger
 from abc import ABC, abstractmethod
 from typing import Self, Optional
@@ -5,17 +9,26 @@ import watchfiles
 import asyncio
 import signal
 import yaml
-from .callbacks import AbstractCallback
-from .callbacks import CallbackAttributeError, CallbackCircularAttributeError
+import pathlib
 
 
 class TaskSyntaxError(Exception):
     """
-    Raised when on a task syntax issue.
+    Raised on task syntax issue.
     """
 
-    def __init__(self, hint, message="task syntax error: {hint}"):
-        self.message = message.format(hint=hint)
+    def __init__(self, message="task syntax error"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class TaskNotImplementedError(Exception):
+    """
+    Raised if a requested task type is not implemented.
+    """
+
+    def __init__(self, type, message="task {type} not implemented"):
+        self.message = message.format(type=type)
         super().__init__(self.message)
 
 
@@ -72,9 +85,20 @@ class TaskList(list):
             super().__init__()
 
 
+class TaskError(Exception):
+    """
+    Raised when a path watched by task does not exist anymore.
+    """
+
+    def __init__(self, task, message="error in task {task}"):
+        self.message = message.format(task=task)
+        super().__init__(self.message)
+
+
 class WatchfilesTask(AbstractTask):
     def __init__(self, name: str, changes: list[watchfiles.Change],
                  callbacks: list[AbstractCallback], paths: list[str],
+                 timeout: int, max_retry: int,
                  attrs: Optional[dict[str, str]] = None) -> None:
         """
         :param name: unique identifier
@@ -88,10 +112,46 @@ class WatchfilesTask(AbstractTask):
         self.callbacks = callbacks
         self.paths = paths
         self.attrs = {} if attrs is None else attrs
+        self.max_retry = max_retry
+        self.timeout = timeout
         super().__init__()
 
     async def __call__(self, callback):
         await super().__call__(callback)
+        retry = 0
+        max_retry = 'inf' if self.max_retry == -1 else self.max_retry
+
+        while True:
+            try:
+                for path in self.paths:
+                    if not pathlib.Path.exists(pathlib.Path(path)):
+                        raise FileNotFoundError(path)
+            except FileNotFoundError as path:
+                if retry == self.max_retry and self.max_retry > -1:
+                    logger.error(f'in task {self.name}'
+                                 f' path {path} does not exist '
+                                 f'and max_retry {self.max_retry} '
+                                 'was reached')
+                    raise TaskError(self.name)
+                else:
+                    retry += 1
+                    logger.warning(f'in task {self.name}'
+                                   f' path {path} does not exist (anymore)'
+                                   f'... retrying callback {callback.name}'
+                                   f' after {self.timeout} sec timeout '
+                                   f' ({retry}/{max_retry} retries)')
+                    await asyncio.sleep(self.timeout)
+                    continue
+
+            # run awatch loop if all paths exist
+            try:
+                await self.awatch_loop(callback)
+            except FileNotFoundError:
+                continue
+            finally:
+                retry = 0
+
+    async def awatch_loop(self, callback):
         async for changes in watchfiles.awatch(*self.paths):
             for (change, path) in changes:
                 if change in self.changes:
@@ -112,6 +172,9 @@ class WatchfilesTask(AbstractTask):
                         logger.error(f'in task {self.name} callback {callback.name} raised {err}') # noqa
                         raise err
 
+                    if chng == 'deleted' and path in self.paths:
+                        raise FileNotFoundError
+
     @classmethod
     def from_yaml(cls, name: str, data: str,
                   callbacks: list[AbstractCallback]) -> Self:
@@ -127,6 +190,10 @@ class WatchfilesTask(AbstractTask):
             paths:
                 - /some/path/to/file1
                 - /some/path/to/file2
+            attrs:
+                myattr: value
+            timeout: 10
+            max_retry: 3
 
         Possible changes are ``added``, ``modified`` and ``deleted``.
 
@@ -139,18 +206,31 @@ class WatchfilesTask(AbstractTask):
         """
         super().from_yaml(name, data, callbacks)
         try:
-            yamldata = yaml.load(data, Loader=yaml.SafeLoader)
+            yamldata = yaml.safe_load(data)
         except yaml.YAMLError as err:
-            if hasattr(err, 'problem_mark'):
-                mark = getattr(err, 'problem_mark')
-                problem = getattr(err, 'problem')
-                message = (f'YAML problem in line {mark.line} column'
-                           f'{mark.column}:\n {problem})')
-            elif hasattr(err, 'problem'):
-                problem = getattr(err, 'problem')
-                message = f'YAML problem:\n {problem}'
-            logger.error(message)
-            raise err
+            raise TaskSyntaxError(err)
+
+        if 'timeout' in yamldata:
+            try:
+                timeout = int(yamldata['timeout'])
+                if not timeout > 0:
+                    raise ValueError
+            except ValueError:
+                raise TaskSyntaxError(f"in task {name}: invalid timeout")
+            except TypeError:
+                raise TaskSyntaxError(f"in task {name}: timeout not integer")
+        else:
+            timeout = 30
+
+        if 'max_retry' in yamldata:
+            try:
+                max_retry = int(yamldata['max_retry'])
+            except ValueError:
+                raise TaskSyntaxError(f"in task {name}: invalid max_retry")
+            except TypeError:
+                raise TaskSyntaxError(f"in task {name}: max_retry not integer")
+        else:
+            max_retry = 5
 
         if 'changes' not in yamldata:
             raise TaskSyntaxError(f"in task {name}: "
@@ -163,6 +243,11 @@ class WatchfilesTask(AbstractTask):
         if not isinstance(yamldata['paths'], list):
             raise TaskSyntaxError(f"in task {name}: "
                                   "paths must be a list")
+
+        for path in yamldata['paths']:
+            if not isinstance(path, str):
+                raise TaskSyntaxError(f"in task {name}: "
+                                      "paths must be strings")
 
         if len(yamldata['paths']) < 1:
             raise TaskSyntaxError(f"in task {name}: "
@@ -188,7 +273,7 @@ class WatchfilesTask(AbstractTask):
 
         paths = yamldata["paths"]
         attrs = yamldata['attrs'] if 'attrs' in yamldata else None
-        return cls(name, changes, callbacks, paths, attrs)
+        return cls(name, changes, callbacks, paths, timeout, max_retry, attrs)
 
 
 class TaskRunner:
@@ -240,9 +325,9 @@ class TaskRunner:
         for task in self.tasks:
             task.cancel()
 
-    async def cancle_tasks(self, delay=5):
+    async def cancle_tasks(self, delay=2):
         """
-        Cancle tasks (for testing purposed)
+        Cancle tasks (for testing purposes)
         """
         await asyncio.sleep(delay)
         for task in self.tasks:

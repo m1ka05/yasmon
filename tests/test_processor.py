@@ -1,121 +1,208 @@
-from yasmon import YAMLProcessor, CallbackDict, CallbackSyntaxError
+from yasmon.processor import YAMLProcessor, YAMLSyntaxError
+from yasmon.callbacks import CallbackDict, CallbackSyntaxError
+from yasmon.callbacks import CallbackNotImplementedError
+from yasmon.tasks import TaskNotImplementedError
+from yasmon.loggers import LoggerSyntaxError
+
 from loguru import logger
 import unittest
-import yaml
-
-logger.remove(0)
+from unittest import mock
 
 
 class YAMLProcessorTest(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super(YAMLProcessorTest, self).__init__(*args, **kwargs)
-        self.proc = YAMLProcessor(yaml.SafeLoader)
+        self.proc = YAMLProcessor()
 
-    def test_load_file_raises_FileNotFoundError(self):
-        self.assertRaises(
-            FileNotFoundError,
-            self.proc.load_file,
-            "tests/assets/notafile")
-        self.assertRaises(
-            FileNotFoundError,
-            self.proc.load_file,
-            "tests/asset/config.yaml")
+    def test_load_file_raise_exceptions(self):
+        """
+        Test if YAMLProcessor.load_file() raises appropriate exceptions.
+        """
 
-    def test_load_file_raises_YAMLError(self):
-        self.assertRaises(
-            yaml.YAMLError,
-            self.proc.load_file,
-            "tests/assets/invalid.yaml")
+        fun = self.proc.load_file
 
-    def test_load_document_raises_YAMLError(self):
+        # FileNotFoundError
+        self.assertRaises(FileNotFoundError, fun, "tests/assets/notafile")
+        self.assertRaises(FileNotFoundError, fun, "tests/asset/config.yaml")
+
+        # OSError
+        with mock.patch('builtins.open') as mock_oserror:
+            mock_oserror.side_effect = OSError
+            self.assertRaises(OSError, fun, 'tests/assets/config.yaml')
+
+        # Exception
+        with mock.patch('builtins.open') as mock_oserror:
+            mock_oserror.side_effect = Exception
+            self.assertRaises(Exception, fun, 'tests/assets/config.yaml')
+
+        # PermissionError
+        with mock.patch('builtins.open') as mock_oserror:
+            mock_oserror.side_effect = PermissionError
+            self.assertRaises(PermissionError, fun, 'tests/assets/config.yaml')
+
+        # YAMLSyntaxError
+        self.assertRaises(YAMLSyntaxError, fun, 'tests/assets/invalid.yaml')
+
+        # empty config file
+        path = 'tests/assets/empty.yaml'
+        self.assertRaises(YAMLSyntaxError, self.proc.load_file, path)
+
+    def test_load_document_raise_exceptions(self):
+        """
+        Test if YAMLProcessor.load_document() raises appropriate exceptions.
+        """
+
+        # general syntax error
         test_yaml = """
         key: ][
         """
-        self.assertRaises(yaml.YAMLError, self.proc.load_document, test_yaml)
+        self.assertRaises(YAMLSyntaxError, self.proc.load_document, test_yaml)
 
-    def test_add_logger_adds_stderr_logger(self):
+        # config is empty
+        test_yaml = """
+        """
+        self.assertRaises(YAMLSyntaxError, self.proc.load_document, test_yaml)
+
+    def test_add_logger_implemented_loggers(self):
+        """
+        Test if YAMLProcessor.add_loggers() can process implemented loggers.
+        """
+
+        # log_stderr
         test_yaml = """
         log_stderr:
         """
         self.proc.load_document(test_yaml)
-        assert self.proc.add_loggers() == 1
+        assert len(self.proc.add_loggers()) == 1
         logger.remove()
 
-    def test_add_logger_sets_stderr_level(self):
+        # log_stderr with level info
         test_yaml = """
         log_stderr:
             level: info
         """
         self.proc.load_document(test_yaml)
-        assert self.proc.add_loggers() == 1
+        assert len(self.proc.add_loggers()) == 1
         assert self.proc.data['log_stderr']['level'] == 'info'
         logger.remove()
 
-    def test_add_logger_raises_AssertionError_on_invalid_stderr_level(self):
+        # log_journal
+        test_yaml = """
+        log_journal:
+        """
+        self.proc.load_document(test_yaml)
+        assert len(self.proc.add_loggers()) == 1
+        logger.remove()
+
+        # log_journal with level debug
+        test_yaml = """
+        log_journal:
+            level: debug
+        """
+        self.proc.load_document(test_yaml)
+        assert len(self.proc.add_loggers()) == 1
+        assert self.proc.data['log_journal']['level'] == 'debug'
+        logger.remove()
+
+        # log_file
+        test_yaml = """
+        log_file:
+            path: tests/assets/tmp/logfile
+        """
+        self.proc.load_document(test_yaml)
+        assert self.proc.data['log_file']['path'] == 'tests/assets/tmp/logfile'
+        assert len(self.proc.add_loggers()) == 1
+        logger.remove()
+
+        # log_file with level debug
+        test_yaml = """
+        log_file:
+            path: tests/assets/tmp/logfile
+            level: error
+        """
+        self.proc.load_document(test_yaml)
+        assert len(self.proc.add_loggers()) == 1
+        assert self.proc.data['log_file']['level'] == 'error'
+        assert self.proc.data['log_file']['path'] == 'tests/assets/tmp/logfile'
+        logger.remove()
+
+    def test_add_logger_raise_exceptions(self):
+        """
+        Test if YAMLProcessor.add_loggers() raises appropriate exceptions.
+        """
+
+        # invalid level
+        test_yaml = """
+        log_stderr:
+            level: []
+        """
+        self.proc.load_document(test_yaml)
+        self.assertRaises(LoggerSyntaxError, self.proc.add_loggers)
+        logger.remove()
+
+        # invalid level
+        test_yaml = """
+        log_journal:
+            level: []
+        """
+        self.proc.load_document(test_yaml)
+        self.assertRaises(LoggerSyntaxError, self.proc.add_loggers)
+        logger.remove()
+
+        # invalid level
+        test_yaml = """
+        log_file:
+            path: /tmp/log
+            level: []
+        """
+        self.proc.load_document(test_yaml)
+        self.assertRaises(LoggerSyntaxError, self.proc.add_loggers)
+        logger.remove()
+
+        # invalid path
+        test_yaml = """
+        log_file:
+            path: []
+        """
+        self.proc.load_document(test_yaml)
+        self.assertRaises(LoggerSyntaxError, self.proc.add_loggers)
+        logger.remove()
+
+        # invalid level (not implemented)
         test_yaml = """
         log_stderr:
             level: notalevel
         """
         self.proc.load_document(test_yaml)
-        self.assertRaises(AssertionError, self.proc.add_loggers)
+        self.assertRaises(LoggerSyntaxError, self.proc.add_loggers)
 
-    def test_add_logger_adds_journal_logger(self):
-        test_yaml = """
-        log_journal:
-        """
-        self.proc.load_document(test_yaml)
-        assert self.proc.add_loggers() == 1
-        logger.remove()
-
-    def test_add_logger_sets_journal_level(self):
-        test_yaml = """
-        log_journal:
-            level: info
-        """
-        self.proc.load_document(test_yaml)
-        assert self.proc.add_loggers() == 1
-        assert self.proc.data['log_journal']['level'] == 'info'
-        logger.remove()
-
-    def test_add_logger_raises_AsserionError_on_invalid_journal_level(self):
+        # invalid level (not implemented)
         test_yaml = """
         log_journal:
             level: notalevel
         """
         self.proc.load_document(test_yaml)
-        self.assertRaises(AssertionError, self.proc.add_loggers)
+        self.assertRaises(LoggerSyntaxError, self.proc.add_loggers)
 
-    def test_add_adds_logger_file(self):
+        # OSError
         test_yaml = """
         log_file:
-            path: /tmp/test_add_logger_file.log
+            path: /tmp/log
         """
         self.proc.load_document(test_yaml)
-        assert self.proc.add_loggers() == 1
-        assert self.proc.data['log_file']['path'] == '/tmp/test_add_logger_file.log' # noqa
-        logger.remove()
+        with mock.patch('builtins.open') as mock_oserror:
+            mock_oserror.side_effect = OSError
+            self.assertRaises(OSError, self.proc.add_loggers)
 
-    def test_add_logger_sets_level_and_path(self):
-        test_yaml = """
-        log_file:
-            path: /tmp/test_add_logger_file.log
-            level: info
-        """
-        self.proc.load_document(test_yaml)
-        assert self.proc.add_loggers() == 1
-        assert self.proc.data['log_file']['level'] == 'info'
-        assert self.proc.data['log_file']['path'] == '/tmp/test_add_logger_file.log' # noqa
-        logger.remove()
-
-    def test_add_logger_raises_AssertionError_on_missing_file_path_key_for_log_file(self): # noqa
+        # missing path for log_file
         test_yaml = """
         log_file:
         """
         self.proc.load_document(test_yaml)
-        self.assertRaises(AssertionError, self.proc.add_loggers)
+        self.assertRaises(LoggerSyntaxError, self.proc.add_loggers)
 
-    def test_add_adds_all_defined_loggers(self):
+        # adds all defined loggers
         test_yaml = """
         log_stderr:
         log_journal:
@@ -123,26 +210,33 @@ class YAMLProcessorTest(unittest.TestCase):
             path: /tmp/test_add_logger_file.log
         """
         self.proc.load_document(test_yaml)
-        assert self.proc.add_loggers() == 3
+        assert len(self.proc.add_loggers()) == 3
         assert self.proc.data['log_file']['path'] == '/tmp/test_add_logger_file.log' # noqa
         logger.remove()
 
-    def test_get_tasks_raises_AssertionError_if_tasks_not_defined(self):
+    def test_get_tasks_raise_exceptions(self):
+        """
+        Test if YAMLProcessor.get_tasks() raises appropriate exceptions.
+        """
+
+        fun = self.proc.get_tasks
+
+        # tasks not defined
         test_yaml = """
         key:
         """
         self.proc.load_document(test_yaml)
-        self.assertRaises(AssertionError, self.proc.get_tasks, CallbackDict())
+        self.assertRaises(YAMLSyntaxError, fun, CallbackDict())
 
-    def test_get_raises_AssertionError_if_tasks_not_dictionary(self):
+        # tasks are not a dictionary
         test_yaml = """
         tasks:
             - sometask
         """
         self.proc.load_document(test_yaml)
-        self.assertRaises(AssertionError, self.proc.get_tasks, CallbackDict())
+        self.assertRaises(YAMLSyntaxError, fun, CallbackDict())
 
-    def test_get_tasks_raises_AssertionError_if_task_missing_callbacks(self):
+        # task is missing callbacks
         test_yaml = """
         tasks:
             sometask:
@@ -153,18 +247,18 @@ class YAMLProcessorTest(unittest.TestCase):
                     - added
         """
         self.proc.load_document(test_yaml)
-        self.assertRaises(AssertionError, self.proc.get_tasks, CallbackDict())
+        self.assertRaises(YAMLSyntaxError, fun, CallbackDict())
 
-    def test_get_tasks_raises_AssertionError_if_taskdata_not_dictionary(self):
+        # task data (sometask) is not a dictionary
         test_yaml = """
         tasks:
             sometask:
                 - type: watchfiles
         """
         self.proc.load_document(test_yaml)
-        self.assertRaises(AssertionError, self.proc.get_tasks, CallbackDict())
+        self.assertRaises(YAMLSyntaxError, fun, CallbackDict())
 
-    def test_get_tasks_raises_NotImplementedError_if_task_not_implemented(self): # noqa
+        # task is not implemented
         test_yaml = """
         callbacks:
             callback0:
@@ -184,67 +278,49 @@ class YAMLProcessorTest(unittest.TestCase):
         """
         self.proc.load_document(test_yaml)
         callbacks = self.proc.get_callbacks()
-        self.assertRaises(NotImplementedError, self.proc.get_tasks, callbacks)
+        self.assertRaises(TaskNotImplementedError, fun, callbacks)
 
-    def test_get_tasks_raises_TaskSyntaxError_on_syntax_error(self):
-        test_yaml = """
-        callbacks:
-            callback0:
-                type: shell
-                command: exit 0
-        tasks:
-            sometask:
-                type: watchfiles
-                changes:
-                    - added
-                    - modified
-                    - deleted
-                paths:
-                    - /tmp/
-                callbacks:
-                    - callback0
+    def test_get_callbacks_raise_exceptions(self):
         """
-        try:
-            self.proc.load_document(test_yaml)
-            callbacks = self.proc.get_callbacks()
-            self.proc.get_tasks(callbacks)
-        except Exception:
-            pass  # tbd
+        Test if YAMLProcessor.get_callbacks() raises appropriate exceptions.
+        """
 
-    def test_get_callbacks_raises_AssertionError_if_callbacks_not_defined(self): # noqa
+        fun = self.proc.get_callbacks
+
+        # callbacks not defined
         test_yaml = """
-        key:
+        tasks:
         """
         self.proc.load_document(test_yaml)
-        self.assertRaises(AssertionError, self.proc.get_callbacks)
+        self.assertRaises(YAMLSyntaxError, fun)
 
-    def test_get_callbacks_not_dictionary(self):
+        # callbacks not a dictionary
         test_yaml = """
         callbacks:
             - callback0
         """
         self.proc.load_document(test_yaml)
-        self.assertRaises(AssertionError, self.proc.get_callbacks)
+        self.assertRaises(YAMLSyntaxError, fun)
 
-    def test_get_callbacks_raises_AssertionError_if_callbackdata_not_dictionary(self): # noqa
+        # callback data (callback0) is not a dictionary
         test_yaml = """
         callbacks:
             callback0:
                 - type: watchfiles
         """
         self.proc.load_document(test_yaml)
-        self.assertRaises(AssertionError, self.proc.get_callbacks)
+        self.assertRaises(YAMLSyntaxError, fun)
 
-    def test_get_callbacks_raises_NotImplementedError_if_callback_not_implemented(self): # noqa
+        # callback is not implemented
         test_yaml = """
         callbacks:
             callback0:
                 type: notimplemented
         """
         self.proc.load_document(test_yaml)
-        self.assertRaises(NotImplementedError, self.proc.get_callbacks)
+        self.assertRaises(CallbackNotImplementedError, fun)
 
-    def test_get_callbacks_raises_CallbackSyntaxError_on_callback_syntax_error(self): # noqa
+        # invalid callback syntax
         test_yaml = """
         callbacks:
             callback0:
@@ -252,7 +328,7 @@ class YAMLProcessorTest(unittest.TestCase):
                 level: notdefined
         """
         self.proc.load_document(test_yaml)
-        self.assertRaises(CallbackSyntaxError, self.proc.get_callbacks)
+        self.assertRaises(CallbackSyntaxError, fun)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 # /usr/bin/env bash
 
-tmp_dir=tests/assets/tmp/
+tmp_dir=tests/assets/tmp
 add_dir=$assets_dir/added/
 mkdir -p $tmp_dir
 rm -rf $tmp_dir/*
@@ -12,8 +12,8 @@ echo $$ > tests/assets/tmp/watchfiles_test.sh.pid
 # modifiy tests/assets/tmp/watchfiles_call_test
 # add tests/assets/tmp/$RANDOM with random content
 # touch tests/assets/tmp/$sec and rm afterwards
-# timout: 30s
-for sec in {0..15..1}
+# timout: 30s (will be killed anyways)
+for sec in {0..30..1}
 do
     touch $tmp_dir/$sec
     echo $RANDOM > $tmp_dir/watchfiles_call_test;

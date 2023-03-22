@@ -149,8 +149,14 @@ callback, Yasmon raises :class:`yasmon.callbacks.CallbackAttributeError`.
 WatchfilesTask
 """"""""""""""
 
-This task implements watching changes on the file system. The `change`` can
-one of ``added``, ``modified`` or ``deleted``. 
+This task implements watching changes on the file system. The ``change`` can
+one of ``added``, ``modified`` or ``deleted``. The task checks if all
+paths to be watched exist. If a path does not exist or was deleted during
+operation, the task stops for ``timeout`` seconds and retries ``max_retry`` times to watch
+all paths in ``paths``. If ``max_retry = -1`` or any other negative integer,
+the task will retry indefinitely. Defaults are ``timeout = 30`` and ``max_retry = 5``.
+Both keywords are optional. Sometimes a file is recreated upon modification
+(e.g. in Vim), so sporadic warnings are not necessarly a reason for concern.
 
 .. code-block:: yaml
 
@@ -169,6 +175,8 @@ one of ``added``, ``modified`` or ``deleted``.
   attrs:
     myattr: some value
     ...
+  max_retry: 42
+  timeout: 42
 
 
 Loggers

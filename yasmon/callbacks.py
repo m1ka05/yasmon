@@ -46,12 +46,22 @@ def process_attributes(expr: str, attrs: dict[str, str]) -> str:
     return expr
 
 
+class CallbackNotImplementedError(Exception):
+    """
+    Raised if a requested callback type is not implemented.
+    """
+
+    def __init__(self, type: str, message="callback {type} not implemented"):
+        self.message = message.format(type=type)
+        super().__init__(self.message)
+
+
 class CallbackAttributeError(Exception):
     """
     Raised when an undefined task attribute is used by a callback.
     """
 
-    def __init__(self, attr, message="undefined attribute {attr}"):
+    def __init__(self, attr: str, message="undefined attribute {attr}"):
         self.message = message.format(attr=attr)
         super().__init__(self.message)
 
@@ -72,8 +82,8 @@ class CallbackSyntaxError(Exception):
     Raised on callback syntax error.
     """
 
-    def __init__(self, message="callback syntax error"):
-        self.message = message.format(message=message)
+    def __init__(self, hint: str, message="callback syntax error"):
+        self.message = message.format(hint=hint)
         super().__init__(self.message)
 
 
@@ -81,6 +91,7 @@ class CallbackDict(dict):
     """
     A dedicated `dictionary` for callbacks.
     """
+
     def __init__(self, mapping=(), **kwargs):
         super().__init__(mapping, **kwargs)
 
@@ -184,7 +195,21 @@ class ShellCallback(AbstractCallback):
         :rtype: ShellCallback
         """
         super().from_yaml(name, data)
-        parsed = yaml.load(data, Loader=yaml.SafeLoader)
+        try:
+            parsed = yaml.safe_load(data)
+        except yaml.YAMLError as err:
+            raise CallbackSyntaxError(err)
+
+        if 'command' not in parsed:
+            raise CallbackSyntaxError(f"""\
+            in callback {name} missig command
+            """)
+
+        if not isinstance(parsed['command'], str):
+            raise CallbackSyntaxError(f"""\
+            in callback {name} missig command
+            """)
+
         cmd = parsed["command"]
         return cls(name, cmd)
 
@@ -236,7 +261,10 @@ class LoggerCallback(AbstractCallback):
         :rtype: LoggerCallback
         """
         super().from_yaml(name, data)
-        parsed = yaml.load(data, Loader=yaml.SafeLoader)
+        try:
+            parsed = yaml.safe_load(data)
+        except yaml.YAMLError as err:
+            raise CallbackSyntaxError(err)
 
         imp_levels = [
             'trace',
@@ -248,9 +276,16 @@ class LoggerCallback(AbstractCallback):
             'critical'
         ]
 
+        if 'level' not in parsed:
+            raise CallbackSyntaxError(f"""\
+            in callback {name} missig logger level
+            """)
+
         level = parsed["level"]
         if level not in imp_levels:
-            raise CallbackSyntaxError(f"invalid level '{level}'")
+            raise CallbackSyntaxError(f"""\
+            in callback {name} invalid logger level {level}
+            """)
 
         message = parsed["message"]
         return cls(name, level, message)
