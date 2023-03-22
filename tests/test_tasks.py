@@ -23,7 +23,7 @@ class TaskRunnerTest(unittest.TestCase):
                                                stdout=subprocess.PIPE,
                                                stderr=subprocess.PIPE)
 
-        # wait a moment for  input producer (just to be safe)
+        # wait a moment for input producer (just to be safe)
         time.sleep(1)
 
     def stop_input_producer(self):
@@ -198,7 +198,7 @@ class WatchfilesTaskTest(unittest.TestCase):
                                                stdout=subprocess.PIPE,
                                                stderr=subprocess.PIPE)
 
-        # wait a moment for  input producer (just to be safe)
+        # wait a moment for input producer (just to be safe)
         time.sleep(1)
 
     def stop_input_producer(self):

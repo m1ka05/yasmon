@@ -325,7 +325,7 @@ class TaskRunner:
         for task in self.tasks:
             task.cancel()
 
-    async def cancle_tasks(self, delay=15):
+    async def cancle_tasks(self, delay=5):
         """
         Cancle tasks (for testing purposes)
         """
