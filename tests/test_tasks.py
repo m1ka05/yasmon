@@ -20,7 +20,9 @@ class TaskRunnerTest(unittest.TestCase):
 
     def start_input_producer(self):
         self.input_producer = subprocess.Popen(self.input_producer_script,
-                                               shell=True)
+                                               shell=True,
+                                               stdout=subprocess.PIPE,
+                                               stderr=subprocess.PIPE)
 
         # wait a moment for  input producer (just to be safe)
         time.sleep(1)
@@ -125,11 +127,7 @@ class TaskRunnerTest(unittest.TestCase):
         tasks = self.proc.get_tasks(callbacks)
         runner = TaskRunner(tasks, testenv=True)
         fun = runner.loop.run_until_complete
-        # self.assertRaises(CallbackCircularAttributeError, fun, runner())
-        try:
-            fun(runner())
-        except Exception as err:
-            print(f'{err.__class__.__name__} {err}')
+        self.assertRaises(CallbackCircularAttributeError, fun, runner())
         self.stop_input_producer()
 
         # CallbackAttributesError
