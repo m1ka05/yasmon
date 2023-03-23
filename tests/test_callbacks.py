@@ -190,6 +190,19 @@ class LoggerCallbackTest(unittest.TestCase):
         """
         self.assertRaises(CallbackSyntaxError, fun, 'name', test_yaml)
 
+        # missing level
+        test_yaml = """
+            message: some message
+        """
+        self.assertRaises(CallbackSyntaxError, fun, 'name', test_yaml)
+
+        # invalid level type
+        test_yaml = """
+            level: []
+            message: some message
+        """
+        self.assertRaises(CallbackSyntaxError, fun, 'name', test_yaml)
+
         # invalid level
         test_yaml = """
             level: INVALID
