@@ -216,6 +216,13 @@ class LoggerCallbackTest(unittest.TestCase):
         """
         self.assertRaises(CallbackSyntaxError, fun, 'name', test_yaml)
 
+        # invalid message type
+        test_yaml = """
+            level: info
+            message: []
+        """
+        self.assertRaises(CallbackSyntaxError, fun, 'name', test_yaml)
+
     def test_call_success(self):
         """
         Test LoggerCallback.__call__() for success.
