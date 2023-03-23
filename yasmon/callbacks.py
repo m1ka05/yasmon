@@ -207,7 +207,7 @@ class ShellCallback(AbstractCallback):
 
         if not isinstance(parsed['command'], str):
             raise CallbackSyntaxError(f"""\
-            in callback {name} missig command
+            in callback {name} not a string
             """)
 
         cmd = parsed["command"]
@@ -285,6 +285,16 @@ class LoggerCallback(AbstractCallback):
         if level not in imp_levels:
             raise CallbackSyntaxError(f"""\
             in callback {name} invalid logger level {level}
+            """)
+
+        if 'message' not in parsed:
+            raise CallbackSyntaxError(f"""\
+            in callback {name} missig message
+            """)
+
+        if not isinstance(parsed['message'], str):
+            raise CallbackSyntaxError(f"""\
+            in callback {name} message not a string
             """)
 
         message = parsed["message"]
