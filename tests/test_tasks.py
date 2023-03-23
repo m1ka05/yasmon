@@ -28,9 +28,9 @@ class TaskRunnerTest(unittest.TestCase):
 
     def stop_input_producer(self):
         if self.input_producer:
-            self.input_producer.communicate()
             self.input_producer.kill()
             self.input_producer.wait()
+            self.input_producer.communicate()
             self.input_producer = None
 
     def test_call_testenv(self):
@@ -203,9 +203,9 @@ class WatchfilesTaskTest(unittest.TestCase):
 
     def stop_input_producer(self):
         if self.input_producer:
-            self.input_producer.communicate()
             self.input_producer.kill()
             self.input_producer.wait()
+            self.input_producer.communicate()
             self.input_producer = None
 
     def test_from_yaml_value_assignment(self):
