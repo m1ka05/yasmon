@@ -1,0 +1,16 @@
+log_stderr:
+    level: error
+callbacks:
+    callback0:
+        type: shell
+tasks:
+    watchfilestask:
+        type: watchfiles
+        changes:
+            - deleted
+        paths:
+            - tests/assets/tmp/
+        callbacks:
+            - callback0
+        attrs:
+            myattr: somevalue

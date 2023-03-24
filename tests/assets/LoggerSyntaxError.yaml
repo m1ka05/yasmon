@@ -1,0 +1,19 @@
+log_stderr:
+    level: []
+callbacks:
+    callback0:
+        type: shell
+        command: exit 0
+tasks:
+    watchfilestask:
+        type: watchfiles
+        changes:
+            - deleted
+        paths:
+            - tests/assets/tmp/
+        callbacks:
+            - callback0
+        attrs:
+            myattr: somevalue
+        max_retry: 1
+        timeout: 1

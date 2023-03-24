@@ -1,4 +1,5 @@
 from yasmon import cli
+from loguru import logger
 
 import unittest
 
@@ -25,9 +26,11 @@ class CLITest(unittest.TestCase):
         during operation.
         """
 
+        default_logger_id = cli.setup_default_logger()
         args = cli.parse_args('--config', 'tests/assets/config.yaml')
-        code = cli.execute(args)
+        code = cli.execute(args, default_logger_id)
         assert code == cli.ExitCodes.Success
+        logger.remove()
 
     def test_execute_ExitCode_FileNotFoundError(self):
         """
@@ -37,9 +40,11 @@ class CLITest(unittest.TestCase):
         does not exist.
         """
 
+        default_logger_id = cli.setup_default_logger()
         args = cli.parse_args('--config', 'invalid/path/to/config')
-        code = cli.execute(args)
+        code = cli.execute(args, default_logger_id)
         assert code == cli.ExitCodes.FileNotFoundError
+        logger.remove()
 
     def test_execute_ExitCode_YAMLSyntaxError(self):
         """
@@ -49,9 +54,47 @@ class CLITest(unittest.TestCase):
         is invalid. This includes typical YAML Syntax errors as well as
         Yasmon specific syntax errors like missing callbacks and tasks.
         """
+
+        default_logger_id = cli.setup_default_logger()
         args = cli.parse_args('--config', 'tests/assets/invalid.yaml')
-        code = cli.execute(args)
+        code = cli.execute(args, default_logger_id)
         assert code == cli.ExitCodes.YAMLSyntaxError
+        logger.remove()
+
+    def test_execute_catches_mocked_exceptions(self):
+        """
+        Test if cli.execute() catches all necessary exceptions.
+
+        This only tests if all appropriate ExitCodes are returned.
+        Actual rasing of exceptions is tested elsewhere.
+        """
+
+        # cli.ExitCodes.CallbackSyntaxError
+        default_logger_id = cli.setup_default_logger()
+        args = cli.parse_args(
+            '--config',
+            'tests/assets/CallbackSyntaxError.yaml')
+        code = cli.execute(args, default_logger_id)
+        assert code == cli.ExitCodes.CallbackSyntaxError
+        logger.remove()
+
+        # cli.ExitCodes.TaskError
+        default_logger_id = cli.setup_default_logger()
+        args = cli.parse_args(
+            '--config',
+            'tests/assets/TaskError.yaml')
+        code = cli.execute(args, default_logger_id)
+        assert code == cli.ExitCodes.TaskError
+        logger.remove()
+
+        # cli.ExitCodes.LoggerSyntaxError
+        default_logger_id = cli.setup_default_logger()
+        args = cli.parse_args(
+            '--config',
+            'tests/assets/LoggerSyntaxError.yaml')
+        code = cli.execute(args, default_logger_id)
+        assert code == cli.ExitCodes.LoggerSyntaxError
+        logger.remove()
 
 
 if __name__ == '__main__':
