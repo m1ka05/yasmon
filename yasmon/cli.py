@@ -8,7 +8,6 @@ from yasmon.loggers import LoggerSyntaxError
 from loguru import logger
 import argparse
 from pathlib import Path
-import asyncio
 from enum import IntEnum
 import sys
 
@@ -17,17 +16,14 @@ logger.remove(0)
 
 class ExitCodes(IntEnum):
     Success                         = 0  # noqa
-    Exception                       = 1  # noqa
+    UnexpectedException             = 1  # noqa
     YAMLSyntaxError                 = 2  # noqa
     FileNotFoundError               = 3  # noqa
-    OSError                         = 4  # noqa
-    AssertionError                  = 5  # noqa
-    TaskNotImplementedError         = 6  # noqa
-    CallbackNotImplementedError     = 7  # noqa
-    CallbackSyntaxError             = 8  # noqa
-    TaskError                       = 9  # noqa
-    CancelledError                  = 10 # noqa
-    LoggerSyntaxError               = 11 # noqa
+    TaskNotImplementedError         = 4  # noqa
+    CallbackNotImplementedError     = 5  # noqa
+    CallbackSyntaxError             = 6  # noqa
+    TaskError                       = 7  # noqa
+    LoggerSyntaxError               = 8  # noqa
 
 
 def parse_args(*args):
@@ -50,16 +46,16 @@ def setup_default_logger():
     return logger.add(sys.stderr, format=journal_logger_format, level='DEBUG')
 
 
-def execute(args):
+def execute(args, default_logger_id):
     try:
         processor = YAMLProcessor()
         processor.load_file(args.config)
 
         loggers = processor.add_loggers()
-        num_loggers = len(loggers)
-        if num_loggers > 0:
-            logger.remove(1)
-            logger.info(f'there are {num_loggers} user loggers defined: '
+        num_usr_loggers = len(loggers)
+        if num_usr_loggers > 0:
+            logger.remove(default_logger_id)
+            logger.info(f'there are {num_usr_loggers} user loggers defined: '
                         'default stderr logger removed')
         else:
             logger.warning('there are no user loggers defined: '
@@ -82,30 +78,18 @@ def execute(args):
     except TaskError as err:
         logger.error(f'{err.__class__.__name__}: {err}')
         return ExitCodes.TaskError
-    except asyncio.CancelledError as err:
-        logger.error(f'{err.__class__.__name__}: {err}')
-        return ExitCodes.CancelledError
     except LoggerSyntaxError as err:
         logger.error(f'{err.__class__.__name__}: {err}')
         return ExitCodes.LoggerSyntaxError
-    except OSError as err:
-        logger.error(f'{err.__class__.__name__}: {err}')
-        return ExitCodes.OSError
-    except AssertionError as err:
-        logger.error(f'{err.__class__.__name__}: {err}')
-        return ExitCodes.AssertionError
-    except NotImplementedError as err:
-        logger.error(f'{err.__class__.__name__}: {err}')
-        return ExitCodes.AssertionError
     except Exception as err:
-        logger.error(f'{err.__class__.__name__}: {err}')
-        return ExitCodes.Exception
+        logger.error(f'Unexpected {err.__class__.__name__}: {err}')
+        return ExitCodes.UnexpectedException
 
 
 def main():
-    setup_default_logger()
+    default_logger_id = setup_default_logger()
     args = parse_args(*sys.argv[1:])
-    return execute(args)
+    return execute(args, default_logger_id)
 
 
 if __name__ == '__main__':
