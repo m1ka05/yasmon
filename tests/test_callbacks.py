@@ -114,7 +114,7 @@ class ShellCallbackTest(unittest.TestCase):
         callbacks:
             callback0:
                 type: shell
-                command: echo {myattr}; return 1
+                command: ">&2 echo {myattr}; return 1"
         tasks:
             watchfilestask:
                 type: watchfiles
