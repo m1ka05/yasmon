@@ -2,6 +2,7 @@ from yasmon import cli
 from loguru import logger
 
 import unittest
+from unittest import mock
 
 
 class CLITest(unittest.TestCase):
@@ -61,7 +62,7 @@ class CLITest(unittest.TestCase):
         assert code == cli.ExitCodes.YAMLSyntaxError
         logger.remove()
 
-    def test_execute_catches_mocked_exceptions(self):
+    def test_execute_catches_exceptions(self):
         """
         Test if cli.execute() catches all necessary exceptions.
 
@@ -95,6 +96,17 @@ class CLITest(unittest.TestCase):
         code = cli.execute(args, default_logger_id)
         assert code == cli.ExitCodes.LoggerSyntaxError
         logger.remove()
+
+        # cli.ExitCodes.UnexpectedException
+        with mock.patch('yasmon.processor.YAMLProcessor.__init__') as mck:
+            mck.side_effect = Exception
+            default_logger_id = cli.setup_default_logger()
+            args = cli.parse_args(
+                '--config',
+                'tests/assets/config.yaml')
+            code = cli.execute(args, default_logger_id)
+            assert code == cli.ExitCodes.UnexpectedException
+            logger.remove()
 
 
 if __name__ == '__main__':
