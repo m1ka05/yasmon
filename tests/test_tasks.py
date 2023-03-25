@@ -57,10 +57,12 @@ class TaskRunnerTest(unittest.TestCase):
                 attrs:
                     myattr: somevalue
         """
+        self.start_input_producer()
         self.proc.load_document(test_yaml)
         callbacks = self.proc.get_callbacks()
         tasks = self.proc.get_tasks(callbacks)
         runner = TaskRunner(tasks, testenv=True)
+        self.stop_input_producer()
 
         try:
             runner.loop.run_until_complete(runner())
@@ -488,6 +490,75 @@ class WatchfilesTaskTest(unittest.TestCase):
         timeout: 0
         """
         self.assertRaises(TaskSyntaxError, fun, "name", data, [])
+
+    def test_call_testenv(self):
+        """
+        Test if WatchfilesTask.__call__() runs through.
+        """
+
+        # TaskError on watched file deleted
+        test_yaml = """
+        callbacks:
+            callback0:
+                type: shell
+                command: exit 0;
+        tasks:
+            watchfilestask:
+                type: watchfiles
+                changes:
+                    - modified
+                    - deleted
+                    - added
+                paths:
+                    - tests/assets/tmp/
+                callbacks:
+                    - callback0
+                max_retry: 2
+                timeout: 1
+        """
+        self.start_input_producer()
+        self.proc.load_document(test_yaml)
+        callbacks = self.proc.get_callbacks()
+        tasks = self.proc.get_tasks(callbacks)
+        runner = TaskRunner(tasks, testenv=True)
+        fun = runner.loop.run_until_complete
+        try:
+            fun(runner())
+        except Exception:
+            self.fail()
+        self.stop_input_producer()
+
+    def test_call_raise_exceptions(self):
+        """
+        Test if WatchfilesTask.__call__() raises TaskError.
+        """
+
+        # TaskError on watched file deleted
+        test_yaml = """
+        callbacks:
+            callback0:
+                type: shell
+                command: exit 0;
+        tasks:
+            watchfilestask:
+                type: watchfiles
+                changes:
+                    - modified
+                paths:
+                    - tests/assets/tmp/watchfiles_test.sh.pid
+                callbacks:
+                    - callback0
+                max_retry: 2
+                timeout: 1
+        """
+        self.start_input_producer()
+        self.proc.load_document(test_yaml)
+        callbacks = self.proc.get_callbacks()
+        tasks = self.proc.get_tasks(callbacks)
+        runner = TaskRunner(tasks)
+        fun = runner.loop.run_until_complete
+        self.assertRaises(TaskError, fun, runner())
+        self.stop_input_producer()
 
 
 class TaskListTest(unittest.TestCase):
