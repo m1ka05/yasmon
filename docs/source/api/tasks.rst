@@ -1,18 +1,18 @@
 Tasks
 =====
 
-.. autoclass:: yasmon.TaskRunner
+.. autoclass:: yasmon.tasks.TaskRunner
    :members:
 
-.. autoclass:: yasmon.TaskList
+.. autoclass:: yasmon.tasks.TaskList
    :members:
 
-.. autoclass:: yasmon.WatchfilesTask
+.. autoclass:: yasmon.tasks.WatchfilesTask
    :members:
 
    .. automethod:: __init__
 
-.. autoclass:: yasmon.AbstractTask
+.. autoclass:: yasmon.tasks.AbstractTask
    :members:
 
    .. automethod:: __call__

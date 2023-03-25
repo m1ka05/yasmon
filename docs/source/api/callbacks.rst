@@ -1,32 +1,32 @@
 Callbacks
 =========
 
-.. autoclass:: yasmon.CallbackDict
+.. autoclass:: yasmon.callbacks.CallbackDict
    :members:
 
-.. autoclass:: yasmon.ShellCallback
-   :members:
-
-   .. automethod:: __init__
-
-.. autoclass:: yasmon.LoggerCallback
+.. autoclass:: yasmon.callbacks.ShellCallback
    :members:
 
    .. automethod:: __init__
 
-.. autoclass:: yasmon.AbstractCallback
+.. autoclass:: yasmon.callbacks.LoggerCallback
+   :members:
+
+   .. automethod:: __init__
+
+.. autoclass:: yasmon.callbacks.AbstractCallback
    :members:
 
    .. automethod:: __call__
 
-.. autoclass:: yasmon.CallbackAttributeError
+.. autoclass:: yasmon.callbacks.CallbackAttributeError
    :members:
 
-.. autoclass:: yasmon.CallbackCircularAttributeError
+.. autoclass:: yasmon.callbacks.CallbackCircularAttributeError
    :members:
 
-.. autoclass:: yasmon.CallbackSyntaxError
+.. autoclass:: yasmon.callbacks.CallbackSyntaxError
    :members:
 
-.. autofunction:: yasmon.process_attributes
+.. autofunction:: yasmon.callbacks.process_attributes
 
