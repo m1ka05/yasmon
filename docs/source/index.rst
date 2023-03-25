@@ -33,13 +33,12 @@ Tasks
 -----
 
    * Monitoring file and directory changes, :class:`yasmon.tasks.WatchfilesTask`
-   * |:construction:| Monitoring disk usage, :class:`yasmon.tasks.DiskUsageTask`
    * |:construction:| Monitoring general shell commands, :class:`yasmon.tasks.ShellTask`
-   * |:construction:| Monitoring general python scripts, :class:`yasmon.tasks.PythonTask`
-   * |:construction:| Monitoring file permissions, :class:`yasmon.tasks.FilePermissionsTask`
+   * |:construction:| Monitoring disk usage, :class:`yasmon.tasks.DiskUsageTask`
    * |:construction:| Monitoring systemd services, :class:`yasmon.tasks.SystemdServiceTask`
    * |:construction:| Monitoring memory usage, :class:`yasmon.tasks.MemoryUsageTask`
    * |:construction:| Monitoring cpu load, :class:`yasmon.tasks.CpuLoadTask`
+   * |:construction:| Monitoring file permissions, :class:`yasmon.tasks.FilePermissionsTask`
    * |:construction:| Monitoring ping, :class:`yasmon.tasks.PingTask`
 
 Callbacks
@@ -47,7 +46,6 @@ Callbacks
 
    * Shell commands, :class:`yasmon.callbacks.ShellCallback`
    * Logger callback, :class:`yasmon.callbacks.LoggerCallback`
-   * |:construction:| Python scripts, :class:`yasmon.callbacks.PythonCallback`
    * |:construction:| Mail notifications, :class:`yasmon.callbacks.MailCallback`
 
 .. toctree::
