@@ -111,6 +111,7 @@ class WatchfilesTask(AbstractTask):
         self.changes = changes
         self.callbacks = callbacks
         self.paths = paths
+        self.abs_paths = []  # resolved upon self.__call__()
         self.attrs = {} if attrs is None else attrs
         self.max_retry = max_retry
         self.timeout = timeout
@@ -126,6 +127,9 @@ class WatchfilesTask(AbstractTask):
                 for path in self.paths:
                     if not pathlib.Path.exists(pathlib.Path(path)):
                         raise FileNotFoundError(path)
+                    else:
+                        abs_path = pathlib.Path(path).resolve()
+                        self.abs_paths.append(str(abs_path))
             except FileNotFoundError as path:
                 if retry == self.max_retry and self.max_retry > -1:
                     logger.error(f'in task {self.name}'
@@ -172,8 +176,9 @@ class WatchfilesTask(AbstractTask):
                         logger.error(f'in task {self.name} callback {callback.name} raised {err}') # noqa
                         raise err
 
-                    if chng == 'deleted' and path in self.paths:
-                        raise FileNotFoundError
+                if (change == watchfiles.Change.deleted and
+                        path in self.abs_paths):
+                    raise FileNotFoundError
 
     @classmethod
     def from_yaml(cls, name: str, data: str,
