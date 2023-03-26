@@ -33,6 +33,7 @@ Tasks
 -----
 
    * Monitoring file and directory changes, :class:`yasmon.tasks.WatchfilesTask`
+   * |:construction:| Running scheduled tasks, :class:`yasmon.tasks.SchedulerTask`
    * |:construction:| Monitoring general shell commands, :class:`yasmon.tasks.ShellTask`
    * |:construction:| Monitoring disk usage, :class:`yasmon.tasks.DiskUsageTask`
    * |:construction:| Monitoring systemd services, :class:`yasmon.tasks.SystemdServiceTask`
