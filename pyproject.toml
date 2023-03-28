@@ -1,6 +1,6 @@
 [project]
 name = "yasmon"
-version = "0.2.3"
+version = "0.2.4"
 authors = [
   { name="Michał Ł. Mika", email="michal@mika.sh" },
 ]
