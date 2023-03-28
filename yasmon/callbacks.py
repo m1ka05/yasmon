@@ -1,10 +1,14 @@
 from loguru import logger
 from abc import ABC, abstractmethod
 from typing import Self, TYPE_CHECKING
-from textwrap import dedent
 import asyncio
 import yaml
 import re
+import smtplib
+import email
+import ssl
+import mimetypes
+import pathlib
 
 if TYPE_CHECKING:
     from .tasks import AbstractTask
@@ -71,8 +75,8 @@ class CallbackCircularAttributeError(Exception):
     Raised when task attributes have circular dependencies.
     """
 
-    def __init__(self, expr: str, message=dedent("""\
-    {expr}\ndetected circular attributes""")):
+    def __init__(self, expr: str,
+                 message="{expr}\ndetected circular attributes"):
         self.message = message.format(expr=expr)
         super().__init__(self.message)
 
@@ -82,8 +86,18 @@ class CallbackSyntaxError(Exception):
     Raised on callback syntax error.
     """
 
-    def __init__(self, hint: str, message="callback syntax error"):
-        self.message = message.format(hint=hint)
+    def __init__(self, message="callback syntax error"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class CallbackError(Exception):
+    """
+    Raised on callback execution error.
+    """
+
+    def __init__(self, message="callback error"):
+        self.message = message
         super().__init__(self.message)
 
 
@@ -119,6 +133,9 @@ class AbstractCallback(ABC):
         Coroutine called by :class:`TaskRunner`.
 
         :param task: task calling the callback
+        :raises CallbackError: see documentation
+        :raises CallbackAttributeError: see documentation
+        :raises CallbackCircularAttributeError: see documentation
         """
         logger.info(f'{self.name} ({self.__class__}) called by '
                     f'{task.name} ({task.__class__})')
@@ -299,3 +316,274 @@ class LoggerCallback(AbstractCallback):
 
         message = parsed["message"]
         return cls(name, level, message)
+
+
+class MailCallback(AbstractCallback):
+    """
+    Callback implementing sending simple notification mails with
+    attachments.
+    """
+
+    def __init__(self, name: str, host: str, port: int, login: str,
+                 password: str, security: str, toaddr: str, subject: str,
+                 fromaddr: str, message: str, attach: list[str],
+                 delay: int) -> None:
+        """
+        :param name: unique callback identifier
+        :param host: smtp host
+        :param port: smtp port
+        :param login: login name
+        :param password: password
+        :param security: ``starttls`` or ``ssl``
+        :param toaddr: to address
+        :param subject: mail subject
+        :param fromaddr: from address
+        :param message: message
+        """
+        self.name = name
+        self.host = host
+        self.port = port
+        self.login = login
+        self.password = password
+        self.security = security
+        self.toaddr = toaddr
+        self.subject = subject
+        self.fromaddr = fromaddr
+        self.message = message
+        self.attach = attach
+        self.delay = delay
+        super().__init__()
+
+    def send_message_starttls(self, message: email.message.EmailMessage):
+        """
+        Send message using STARTTLS.
+        """
+
+        context = ssl.create_default_context()
+        server = smtplib.SMTP(self.host, self.port)
+        try:
+            server.starttls(context=context)
+            server.login(self.login, self.password)
+            server.send_message(message)
+        except Exception:
+            raise
+        finally:
+            server.quit()
+
+    def send_message_ssl(self, message: email.message.EmailMessage):
+        """
+        Send message using SSL.
+        """
+
+        try:
+            server = smtplib.SMTP_SSL(self.host, self.port)
+            server.login(self.login, self.password)
+            server.send_message(message)
+        except Exception:
+            raise
+        finally:
+            server.quit()
+
+    def process_attachments(self, message: email.message.EmailMessage,
+                            attrs: dict[str, str]) -> None:
+        """
+        Process list of attachments from ``attach`` and attach these to
+        ``message``.
+
+        :raises CallbackError: if path to file does not exist
+        """
+
+        try:
+            for attachment in self.attach:
+                processed_path = process_attributes(attachment, attrs)
+                filepath = pathlib.Path(processed_path)
+                filename = filepath.name
+                mimetype = mimetypes.guess_type(filename)
+                if mimetype[0]:
+                    data = mimetype[0].split('/')
+                    attachment_mimetype = {
+                        'maintype': data[0],
+                        'subtype': data[1]
+                    }
+                else:
+                    attachment_mimetype = {
+                        'maintype': 'text',
+                        'subtype': 'plain'
+                    }
+                with open(filepath, 'rb') as fh:
+                    attachment_content = fh.read()
+                    message.add_attachment(
+                        attachment_content,
+                        maintype=attachment_mimetype.get('maintype'),
+                        subtype=attachment_mimetype.get('subtype'),
+                        filename=filename)
+        except Exception as err:
+            raise CallbackError(
+                f"in callback '{self.name}' exception "
+                f"'{err.__class__.__name__}' was raised, {err}")
+
+    async def __call__(self, task: 'AbstractTask',
+                       attrs: dict[str, str]) -> None:
+        await super().__call__(task, attrs)
+
+        if self.delay > 0:
+            logger.debug(f'{self.name} ({self.__class__}) '
+                         f'delayed for {self.delay}')
+            await asyncio.sleep(self.delay)
+
+        try:
+            message = email.message.EmailMessage()
+            message['Subject'] = process_attributes(self.subject, attrs)
+            message['From'] = process_attributes(self.fromaddr, attrs)
+            message['To'] = process_attributes(self.toaddr, attrs)
+            content = process_attributes(self.message, attrs)
+            message.set_content(content)
+            self.process_attachments(message, attrs)
+        except CallbackError:
+            raise
+        except CallbackAttributeError:
+            raise
+        except CallbackCircularAttributeError:
+            raise
+
+        try:
+            loop = asyncio.get_event_loop()
+            match self.security:
+                case 'starttls':
+                    await loop.run_in_executor(
+                        None, self.send_message_starttls, message)
+                case 'ssl':
+                    await loop.run_in_executor(
+                        None, self.send_message_ssl, message)
+            logger.debug(f'{self.name} ({self.__class__}) '
+                         f'sent a mail')
+        except Exception as err:
+            raise CallbackError(
+                f"in callback '{self.name}' exception "
+                f"'{err.__class__.__name__}' was raised, {err}")
+
+    @classmethod
+    def from_yaml(cls, name: str, data: str) -> Self:
+        """
+        :class:`MailCallback` can be also constructed from a YAML snippet.
+
+        .. code:: yaml
+
+            host: [SMTP_HOST]
+            port: [SMTP_PORT]
+            login: [SMTP_LOGIN]
+            password: [SMTP_PASSWORD]
+            security: [starttls | ssl]
+            from: account@host.com
+            to: account@anotherhost.com
+            subject: Some subject with an attribute {subject}
+            message: Some message with attributes {message} {date}
+            attach:
+                - patch/to/file1
+                - patch/to/file2
+            delay: 42
+
+        :param name: unique identifier
+        :param data: YAML snippet
+
+        :return: new instance
+        :rtype: MailCallback
+        """
+        super().from_yaml(name, data)
+
+        try:
+            parsed = yaml.safe_load(data)
+        except yaml.YAMLError as err:
+            raise CallbackSyntaxError(err)
+
+        required_keys = [
+            'host',
+            'port',
+            'login',
+            'password',
+            'security',
+            'to',
+            'subject',
+            'from',
+            'message'
+        ]
+
+        for required_key in required_keys:
+            if required_key not in parsed:
+                raise CallbackSyntaxError(
+                    f"in callback '{name}' missing '{required_key}'")
+
+        host = parsed['host']
+        port = parsed['port']
+        login = parsed['login']
+        password = parsed['password']
+        security = parsed['security']
+        toaddr = parsed['to']
+        subject = parsed['subject']
+        fromaddr = parsed['from']
+        message = parsed['message']
+
+        attach: list[str] = []
+        if 'attach' in parsed:
+            if not isinstance(parsed['attach'], list):
+                raise CallbackSyntaxError(
+                    f"in callback '{name}' 'attach' not a list")
+
+            for attachment in parsed['attach']:
+                if not isinstance(attachment, str):
+                    raise CallbackSyntaxError(
+                        f"in callback '{name}' invalid attachment")
+
+                attach.append(attachment)
+
+        if not isinstance(host, str):
+            raise CallbackSyntaxError(
+                f"in callback '{name}' 'host' not a str")
+
+        if not isinstance(login, str):
+            raise CallbackSyntaxError(
+                f"in callback '{name}' 'login' not a str")
+
+        if not isinstance(password, str):
+            raise CallbackSyntaxError(
+                f"in callback '{name}' 'password' not a str")
+
+        if not isinstance(security, str):
+            raise CallbackSyntaxError(
+                f"in callback '{name}' 'security' not a str")
+
+        if not isinstance(toaddr, str):
+            raise CallbackSyntaxError(
+                f"in callback '{name}' 'to' not a str")
+
+        if not isinstance(subject, str):
+            raise CallbackSyntaxError(
+                f"in callback '{name}' 'subject' not a str")
+
+        if not isinstance(fromaddr, str):
+            raise CallbackSyntaxError(
+                f"in callback '{name}' 'from' not a str")
+
+        if not isinstance(message, str):
+            raise CallbackSyntaxError(
+                f"in callback '{name}' 'message' not a str")
+
+        if not isinstance(port, int):
+            raise CallbackSyntaxError(
+                f"in callback '{name}' 'port' not an int")
+
+        if 'delay' in parsed:
+            delay = parsed['delay']
+            if not isinstance(delay, int):
+                raise CallbackSyntaxError(
+                    f"in callback '{name}' 'delay' not an int")
+        else:
+            delay = 0
+
+        if security not in ['starttls', 'ssl']:
+            raise CallbackSyntaxError(
+                f"in callback '{name}' invalid "
+                f"security '{security}' value")
+
+        return cls(name, host, port, login, password, security,
+                   toaddr, subject, fromaddr, message, attach, delay)

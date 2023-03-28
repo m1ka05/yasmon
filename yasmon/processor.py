@@ -1,6 +1,7 @@
 from yasmon.callbacks import AbstractCallback
 from yasmon.callbacks import CallbackDict
-from yasmon.callbacks import ShellCallback, LoggerCallback, CallbackSyntaxError
+from yasmon.callbacks import ShellCallback, LoggerCallback, MailCallback
+from yasmon.callbacks import CallbackSyntaxError
 from yasmon.callbacks import CallbackNotImplementedError
 from yasmon.tasks import TaskList, WatchfilesTask, TaskNotImplementedError
 from yasmon.loggers import LoggerSyntaxError, AbstractLogger
@@ -165,6 +166,9 @@ class YAMLProcessor:
                             callback, yaml.dump(callbackdata))
                     case 'logger':
                         callbacksdict[callback] = LoggerCallback.from_yaml(
+                            callback, yaml.dump(callbackdata))
+                    case 'mail':
+                        callbacksdict[callback] = MailCallback.from_yaml(
                             callback, yaml.dump(callbackdata))
                     case _:
                         raise CallbackNotImplementedError(

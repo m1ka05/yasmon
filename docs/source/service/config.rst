@@ -64,7 +64,7 @@ ShellCallback
 """""""""""""
 
 This callback implements execution of shell commands and supports
-task attributes in `command`.
+task attributes in ``command``.
 
 .. code-block:: yaml
 
@@ -76,13 +76,41 @@ LoggerCallback
 """"""""""""""
 
 This callback implements custom logging to loggers defined in `log_*` and supports
-task attributes in `message`.
+task attributes in ``message``.
 
 .. code-block:: yaml
 
   type: logger
   level: [error | info | debug | ... (see Loguru docs)]
   message: message
+
+
+MailCallback
+""""""""""""""
+
+This callback implements sending mail notifications. Task attributes are supported
+in ``message``, ``subject``, ``from``, ``to`` and ``attach``. Remember, that most mail providers
+will have a quota on outgoing mail traffic. ``MailCallback`` raises appropriate
+exceptions when something goes wrong. Files in ``attach`` require proper extensions
+unless they are ``plain/text``. It is possible to delay a call to ``MailCallback`` by
+defining an optional key ``delay``
+
+.. code-block:: yaml
+
+  type: mail
+  host: [SMTP_HOST]
+  port: [SMTP_PORT]
+  login: [SMTP_LOGIN]
+  password: [SMTP_PASSWORD]
+  security: [starttls | ssl]
+  from: "{from}@host.com"
+  to: "{to}@anotherhost.com"
+  subject: Some subject with an attribute {custom_subject}
+  message: Some message with attributes {custom_message}
+  attach:
+    - path/to/file0.txt
+    - path/to/file1.sh
+  delay: 42
 
 
 Tasks

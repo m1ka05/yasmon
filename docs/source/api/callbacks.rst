@@ -14,6 +14,12 @@ Callbacks
 
    .. automethod:: __init__
 
+.. autoclass:: yasmon.callbacks.MailCallback
+   :members:
+
+   .. automethod:: __init__
+
+
 .. autoclass:: yasmon.callbacks.AbstractCallback
    :members:
 

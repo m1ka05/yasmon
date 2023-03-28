@@ -1,4 +1,4 @@
-watchfiles
+watchfiles == 0.18.*
 pyyaml
 nest-asyncio
 types-PyYAML
