@@ -1,0 +1,37 @@
+---
+name: "Feature test branch"
+
+on:
+  push:
+    branches:
+      - "feat_*"
+
+jobs:
+  pre-release:
+    name: "Test"
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        python-version: ["3.11",]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Run unit tests and coverage
+      env:
+        YASMON_SMTP_HOST: '${{ secrets.YASMON_SMTP_HOST }}'
+        YASMON_SMTP_LOGIN: '${{ secrets.YASMON_SMTP_LOGIN }}'
+        YASMON_SMTP_SECRET: '${{ secrets.YASMON_SMTP_SECRET }}'
+        YASMON_POP3_HOST: '${{ secrets.YASMON_POP3_HOST }}'
+      run: |
+        sudo apt-get update && sudo apt-get -y install \
+          build-essential \
+          libsystemd-dev
+        pip install --upgrade pip
+        pip install --upgrade build
+        pip install -r tests/requirements.txt
+        make init
+        python -m coverage run --omit="*/test*" -m unittest -b
+        python -m coverage report --omit="*/test*"

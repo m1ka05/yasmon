@@ -47,7 +47,7 @@ Callbacks
 
    * Shell commands, :class:`yasmon.callbacks.ShellCallback`
    * Logger callback, :class:`yasmon.callbacks.LoggerCallback`
-   * |:construction:| Mail notifications, :class:`yasmon.callbacks.MailCallback`
+   * Mail notifications, :class:`yasmon.callbacks.MailCallback`
 
 .. toctree::
    :caption: Run as service
@@ -72,15 +72,19 @@ Assume that we want to keep a directory in sync between two machines.
 We could define a task with attributes ``src`` and ``dest`` that calls ``rsync``
 upon any change in ``/tmp/dir/`` to sync with a remote host.
 The ``rsync`` shell callback can use the attributes associated with a task
-and thus could be reused for other tasks.
+and thus could be reused for other tasks. Additionally, we want to send an email
+to report on changes and attach a log file.
 
 .. code-block:: yaml
 
    ---
    log_journal:
      level: info
+   log_file:
+     level: debug
+     path: /tmp/yasmon.log
    tasks:
-     watch_tmp_dir:
+     directory_monitor:
        type: watchfiles
        changes:
          - modified
@@ -88,6 +92,7 @@ and thus could be reused for other tasks.
          - deleted
        callbacks:
          - rsync
+         - mail_report
        paths:
          - /tmp/dir/
        attrs:
@@ -97,43 +102,23 @@ and thus could be reused for other tasks.
      rsync:
        type: shell
        command:  rsync -av {src} {dest} --delete
+     mail_report:
+       type: mail
+       host: smtp.server.com
+       port: 587
+       login: user@server.com
+       password: password
+       security: starttls
+       from: user@server.com
+       to: destination@another.com
+       subject: "Yasmon notification"
+       message: |
+         Yasmon
+         ======
 
+         Directory monitor reports: {path} has been {change}.
+         Running sync...
+       attach:
+         - /tmp/yasmon.log
+       delay: 10
 
-An run would look something like
-
-.. code-block:: shell
-
-   $ yasmon --config ~/rsync.yaml
-
-
-.. code-block::
-
-   INFO     | yasmon.processor:load_file:20 | using config file /home/user/rsync.yaml
-   INFO     | yasmon.processor:add_loggers:54 | processing loggers...
-   INFO     | yasmon.cli:main:34 | 1 user loggers defined. Default stderr logger removed.
-   INFO     | yasmon.callbacks:__init__:103 | rsync (<class 'yasmon.callbacks.ShellCallback'>) initialized                                                                                                                      
-   INFO     | yasmon.tasks:__init__:38 | watch_tmp_dir (<class 'yasmon.tasks.WatchfilesTask'>) initialized                                                                                                                      
-   INFO     | yasmon.tasks:__call__:45 | watch_tmp_dir (<class 'yasmon.tasks.WatchfilesTask'>) scheduled with rsync (<class 'yasmon.callbacks.ShellCallback'>)                                                                  
-   INFO     | yasmon.callbacks:__call__:112 | rsync (<class 'yasmon.callbacks.ShellCallback'>) called by watch_tmp_dir (<class 'yasmon.tasks.WatchfilesTask'>)                                                                  
-   INFO     | yasmon.callbacks:__call__:164 | callback rsync stdout:                                                                                                                                                            
-     sending incremental file list                                                                                                                                                                                              
-    ./                                                                                                                                                                                                                          
-    added_file                                                                                                                                                                                                                  
-
-    sent 132 bytes  received 38 bytes  340,00 bytes/sec                                                                                                                                                                         
-    total size is 2  speedup is 0,01                                                                                                                                                                                            
-   INFO     | yasmon.callbacks:__call__:112 | rsync (<class 'yasmon.callbacks.ShellCallback'>) called by watch_tmp_dir (<class 'yasmon.tasks.WatchfilesTask'>)                                                                  
-   INFO     | yasmon.callbacks:__call__:164 | callback rsync stdout:                                                                                                                                                            
-     sending incremental file list                                                                                                                                                                                              
-    added_file                                                                                                                                                                                                                  
-
-    sent 135 bytes  received 41 bytes  352,00 bytes/sec                                                                                                                                                                         
-    total size is 4  speedup is 0,02                                                                                                                                                                                            
-   INFO     | yasmon.callbacks:__call__:112 | rsync (<class 'yasmon.callbacks.ShellCallback'>) called by watch_tmp_dir (<class 'yasmon.tasks.WatchfilesTask'>)                                                                  
-   INFO     | yasmon.callbacks:__call__:164 | callback rsync stdout:                                                                                                                                                            
-     sending incremental file list                                                                                                                                                                                              
-    deleting added_file                                                                                                                                                                                                         
-    ./                                                                                                                                                                                                                          
-
-    sent 60 bytes  received 33 bytes  62,00 bytes/sec                                                                                                                                                                           
-    total size is 0  speedup is 0,00                                                                                                                                                                                            
