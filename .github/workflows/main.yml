@@ -1,12 +1,6 @@
 ---
 name: "ci"
 
-env:
-  YASMON_SMTP_HOST: ${{ secrets.YASMON_SMTP_HOST }}
-  YASMON_SMTP_LOGIN: ${{ secrets.YASMON_SMTP_LOGIN }}
-  YASMON_SMTP_PASSOWRD: ${{ secrets.YASMON_SMTP_PASSWORD }}
-  YASMON_POP3_HOST: ${{ secrets.YASMON_POP3_HOST }}
-
 on:
   workflow_dispatch:
   push:
@@ -35,6 +29,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Run unit tests and coverage
+      env:
+        YASMON_SMTP_HOST: ${{ secrets.YASMON_SMTP_HOST }}
+        YASMON_SMTP_LOGIN: ${{ secrets.YASMON_SMTP_LOGIN }}
+        YASMON_SMTP_PASSOWRD: ${{ secrets.YASMON_SMTP_PASSWORD }}
+        YASMON_POP3_HOST: ${{ secrets.YASMON_POP3_HOST }}
       run: |
         sudo apt-get update && sudo apt-get -y install \
           build-essential \
@@ -42,9 +41,9 @@ jobs:
         pip install --upgrade pip
         pip install -r tests/requirements.txt
         make init
-        python -m coverage run --omit="*/test*" -m unittest -b
-        python -m coverage report --omit="*/test*"
-        python -m coverage html --omit="*/test*"
+        make test
+        make coverage-report
+        make coverage-html
         coverage-badge -o htmlcov/coverage.svg
     - uses: actions/upload-artifact@v1
       with:
@@ -69,7 +68,7 @@ jobs:
         pip install --upgrade pip
         pip install -r docs/requirements.txt
         make init
-        cd docs/ && make clean; make html
+        make docs
         pip show sphinx-rtd-theme
         python -m pybadges --left-text=docs --right-text=latest > build/html/docs.svg
     - uses: actions/upload-artifact@v1
