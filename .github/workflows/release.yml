@@ -39,8 +39,9 @@ jobs:
         pip install --upgrade build
         pip install -r tests/requirements.txt
         make init
-        python -m coverage run --omit="*/test*" -m unittest -b
-        python -m build
+        make test
+        make coverage-report
+        make build
 
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:

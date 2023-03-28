@@ -16,4 +16,7 @@ coverage-html:
 docs:
 	cd docs && make clean && make html
 
+build:
+	python -m build
+
 .PHONY: docs
