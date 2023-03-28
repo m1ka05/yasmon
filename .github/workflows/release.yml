@@ -29,7 +29,7 @@ jobs:
       env:
         YASMON_SMTP_HOST: ${{ secrets.YASMON_SMTP_HOST }}
         YASMON_SMTP_LOGIN: ${{ secrets.YASMON_SMTP_LOGIN }}
-        YASMON_SMTP_PASSOWRD: ${{ secrets.YASMON_SMTP_SECRET }}
+        YASMON_SMTP_SECRET: ${{ secrets.YASMON_SMTP_SECRET }}
         YASMON_POP3_HOST: ${{ secrets.YASMON_POP3_HOST }}
       run: |
         sudo apt-get update && sudo apt-get -y install \
