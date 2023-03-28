@@ -6,7 +6,9 @@ docs/build/
 */__pycache__
 coverage.svg
 .coverage
+coverage.xml
 htmlcov/
 tests/assets/tmp/
 dist/
 todo
+*.env
